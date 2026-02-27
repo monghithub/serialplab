@@ -7,7 +7,7 @@
       "id": 1,
       "title": "Crear schemas protobuf, avro y thrift del modelo User",
       "promptFile": "prompt-1.md",
-      "passes": false
+      "passes": true
     },
     {
       "id": 2,
