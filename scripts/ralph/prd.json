@@ -7,7 +7,7 @@
       "id": 1,
       "title": "Proyecto Maven + application.yml + HealthController",
       "promptFile": "prompt-1.md",
-      "passes": false
+      "passes": true
     },
     {
       "id": 2,
