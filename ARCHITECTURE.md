@@ -6,7 +6,7 @@
 
 ### Objetivo
 
-Comparar el rendimiento, la interoperabilidad y la complejidad de integración de **7 protocolos de serialización** sobre **6 brokers de mensajería**, implementados en **4 stacks tecnológicos** distintos.
+Comparar el rendimiento, la interoperabilidad y la complejidad de integración de **7 protocolos de serialización** sobre **3 brokers de mensajería**, implementados en **4 stacks tecnológicos** distintos.
 
 ### Alcance
 
@@ -18,6 +18,14 @@ Comparar el rendimiento, la interoperabilidad y la complejidad de integración d
 ### Motivación
 
 En arquitecturas de microservicios reales conviven múltiples lenguajes y brokers. Esta PoC proporciona datos empíricos para decidir qué combinaciones son viables y cuáles ofrecen mejor rendimiento o menor fricción de desarrollo.
+
+### Specs detalladas
+
+La carpeta [`specs/`](specs/) contiene documentación modular de cada componente:
+
+- [`specs/services/`](specs/services/) — Specs de cada servicio (stack, librerías, endpoints).
+- [`specs/protocols/`](specs/protocols/) — Specs de cada protocolo de serialización.
+- [`specs/brokers/`](specs/brokers/) — Specs de cada broker de mensajería.
 
 ---
 
@@ -80,14 +88,16 @@ schemas/
 | 1 | **Apache Kafka** | TCP binario | 9092 | `confluentinc/cp-kafka` |
 | 2 | **RabbitMQ** | AMQP 0-9-1 | 5672, 15672 (mgmt) | `rabbitmq:management` |
 | 3 | **NATS** | TCP texto/binario | 4222, 8222 (monitor) | `nats:latest` |
-| 4 | **Redis Streams** | RESP | 6379 | `redis:latest` |
-| 5 | **Apache ActiveMQ** | OpenWire, AMQP, STOMP | 61616, 8161 (web) | `apache/activemq-classic` |
-| 6 | **Apache Pulsar** | TCP binario | 6650, 8080 (admin) | `apachepulsar/pulsar` |
+
+Estos 3 brokers cubren los paradigmas principales:
+
+- **Kafka**: Log distribuido, alto throughput, retención de mensajes.
+- **RabbitMQ**: Cola de mensajes tradicional, routing flexible, AMQP estándar.
+- **NATS**: Mensajería ligera, baja latencia, pub/sub simple.
 
 ### Dependencias de infraestructura
 
 - **Kafka** requiere ZooKeeper (o KRaft en modo standalone).
-- **Pulsar** requiere ZooKeeper + BookKeeper (incluidos en la imagen standalone).
 
 ---
 
@@ -114,10 +124,7 @@ Se utiliza [AsyncAPI 3.0](https://www.asyncapi.com/) para documentar los contrat
 asyncapi/
 ├── kafka.asyncapi.yaml
 ├── rabbitmq.asyncapi.yaml
-├── nats.asyncapi.yaml
-├── redis.asyncapi.yaml
-├── activemq.asyncapi.yaml
-└── pulsar.asyncapi.yaml
+└── nats.asyncapi.yaml
 ```
 
 Cada archivo define:
@@ -152,13 +159,10 @@ Todas las combinaciones servicio × protocolo × broker están soportadas. La si
 | Kafka | Si | Si | Si | Si |
 | RabbitMQ | Si | Si | Si | Si |
 | NATS | Si | Si | Si | Si |
-| Redis Streams | Si | Si | Si | Si |
-| ActiveMQ | Si | Si | Si | Si |
-| Pulsar | Si | Si | Si | Si |
 
 ### Combinaciones totales
 
-- 4 servicios × 7 protocolos × 6 brokers = **168 combinaciones**
+- 4 servicios × 7 protocolos × 3 brokers = **84 combinaciones**
 - Cada combinación implica un test de publicación + consumo entre al menos 2 servicios.
 
 ---
@@ -172,13 +176,10 @@ La infraestructura se orquesta con Docker Compose. Se divide en dos perfiles:
 ```yaml
 services:
   postgres:       # PostgreSQL 16
-  zookeeper:      # Dependencia de Kafka y Pulsar
+  zookeeper:      # Dependencia de Kafka
   kafka:          # Apache Kafka
   rabbitmq:       # RabbitMQ + Management UI
   nats:           # NATS
-  redis:          # Redis (Streams)
-  activemq:       # Apache ActiveMQ Classic
-  pulsar:         # Apache Pulsar (standalone)
 ```
 
 ### Perfil `app` — Servicios de aplicación
@@ -188,22 +189,22 @@ services:
   service-springboot:
     build: ./service-springboot
     ports: ["8081:8081"]
-    depends_on: [postgres, kafka, rabbitmq, nats, redis, activemq, pulsar]
+    depends_on: [postgres, kafka, rabbitmq, nats]
 
   service-quarkus:
     build: ./service-quarkus
     ports: ["8082:8082"]
-    depends_on: [postgres, kafka, rabbitmq, nats, redis, activemq, pulsar]
+    depends_on: [postgres, kafka, rabbitmq, nats]
 
   service-go:
     build: ./service-go
     ports: ["8083:8083"]
-    depends_on: [postgres, kafka, rabbitmq, nats, redis, activemq, pulsar]
+    depends_on: [postgres, kafka, rabbitmq, nats]
 
   service-node:
     build: ./service-node
     ports: ["8084:8084"]
-    depends_on: [postgres, kafka, rabbitmq, nats, redis, activemq, pulsar]
+    depends_on: [postgres, kafka, rabbitmq, nats]
 ```
 
 ### Comandos principales
@@ -227,33 +228,33 @@ docker compose down
 ## Diagrama de alto nivel
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        serialplab                           │
-│                                                             │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐      │
-│  │springboot│ │ quarkus  │ │    go    │ │   node   │      │
-│  │  :8081   │ │  :8082   │ │  :8083   │ │  :8084   │      │
-│  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘      │
-│       │             │            │             │            │
-│       └─────────────┴─────┬──────┴─────────────┘            │
-│                           │                                 │
-│              ┌────────────┴────────────┐                    │
-│              │   Serialización (x7)    │                    │
-│              │ protobuf, avro, thrift, │                    │
-│              │ msgpack, flatbuf, cbor, │                    │
-│              │ json-schema             │                    │
-│              └────────────┬────────────┘                    │
-│                           │                                 │
-│    ┌──────┬───────┬───────┼───────┬──────────┬─────────┐   │
-│    │      │       │       │       │          │         │   │
-│  ┌─┴──┐┌──┴──┐┌───┴─┐┌───┴──┐┌───┴────┐┌────┴───┐    │   │
-│  │Kafka││Rabbit││NATS ││Redis ││ActiveMQ││Pulsar  │    │   │
-│  │9092 ││ 5672 ││4222 ││ 6379 ││ 61616  ││ 6650   │    │   │
-│  └─────┘└─────┘└─────┘└──────┘└────────┘└────────┘    │   │
-│                           │                                 │
-│                    ┌──────┴──────┐                          │
-│                    │ PostgreSQL  │                          │
-│                    │    5432     │                          │
-│                    └─────────────┘                          │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│                     serialplab                       │
+│                                                     │
+│  ┌──────────┐ ┌──────────┐ ┌────────┐ ┌────────┐  │
+│  │springboot│ │ quarkus  │ │   go   │ │  node  │  │
+│  │  :8081   │ │  :8082   │ │ :8083  │ │ :8084  │  │
+│  └────┬─────┘ └────┬─────┘ └───┬────┘ └───┬────┘  │
+│       │             │           │           │       │
+│       └─────────────┴─────┬─────┴───────────┘       │
+│                           │                         │
+│              ┌────────────┴────────────┐            │
+│              │   Serialización (x7)    │            │
+│              │ protobuf, avro, thrift, │            │
+│              │ msgpack, flatbuf, cbor, │            │
+│              │ json-schema             │            │
+│              └────────────┬────────────┘            │
+│                           │                         │
+│            ┌──────────────┼──────────────┐          │
+│            │              │              │          │
+│         ┌──┴──┐      ┌───┴───┐      ┌───┴──┐      │
+│         │Kafka│      │Rabbit │      │ NATS │      │
+│         │9092 │      │ 5672  │      │ 4222 │      │
+│         └─────┘      └───────┘      └──────┘      │
+│                           │                         │
+│                    ┌──────┴──────┐                  │
+│                    │ PostgreSQL  │                  │
+│                    │    5432     │                  │
+│                    └─────────────┘                  │
+└─────────────────────────────────────────────────────┘
 ```
