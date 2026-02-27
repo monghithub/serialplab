@@ -78,5 +78,52 @@ services:
     ports:
       - "11011:8080"
 
+  frontend-angular:
+    build: ./frontend-angular
+    profiles: ["app"]
+    ports:
+      - "11000:11000"
+    depends_on:
+      - service-springboot
+      - service-quarkus
+      - service-go
+      - service-node
+
+  service-springboot:
+    build: ./service-springboot
+    profiles: ["app"]
+    ports:
+      - "11001:11001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  service-quarkus:
+    build: ./service-quarkus
+    profiles: ["app"]
+    ports:
+      - "11002:11002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  service-go:
+    build: ./service-go
+    profiles: ["app"]
+    ports:
+      - "11003:11003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  service-node:
+    build: ./service-node
+    profiles: ["app"]
+    ports:
+      - "11004:11004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres-data:

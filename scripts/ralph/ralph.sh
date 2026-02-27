@@ -315,6 +315,7 @@ run_subtask() {
     local response_text
     response_text=$(call_lemonade "$prompt_content" "$response_file")
 
+    echo "  📡 Response length: ${#response_text} chars"
     if [ -z "$response_text" ]; then
       output="Error: Empty response from Lemonade"
       echo "$output"
@@ -452,10 +453,14 @@ while [ $i -lt $MAX_ITERATIONS ]; do
 
     START_TS=$(date +%s)
     START_TIME=$(date -Iseconds)
-    OUTPUT=$(run_subtask "$PROMPT_FILE")
+    LOG_SEQ="$SCRIPT_DIR/.output-seq-${SUBTASK_ID}.log"
+    run_subtask "$PROMPT_FILE" "$LOG_SEQ"
     END_TS=$(date +%s)
     END_TIME=$(date -Iseconds)
     DURATION=$((END_TS - START_TS))
+    OUTPUT=$(cat "$LOG_SEQ" 2>/dev/null || echo "")
+    cat "$LOG_SEQ" 2>/dev/null || true
+    rm -f "$LOG_SEQ"
 
     # Check completion
     STATUS="done"
@@ -475,7 +480,10 @@ while [ $i -lt $MAX_ITERATIONS ]; do
     fi
 
     # Adaptive: decide next round's parallelism
-    if [ "$DURATION" -lt "$FAST_THRESHOLD" ]; then
+    # Lemonade (local LLM) cannot handle concurrent requests — always sequential
+    if [ "$TOOL" == "lemonade" ]; then
+      PARALLEL_SLOTS=1
+    elif [ "$DURATION" -lt "$FAST_THRESHOLD" ]; then
       if [ "$PARALLEL_SLOTS" -eq 1 ]; then
         PARALLEL_SLOTS=2
         echo "  ⚡ Task finished in ${DURATION}s (< ${FAST_THRESHOLD}s) → scaling to 2 parallel slots"

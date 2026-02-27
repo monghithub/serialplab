@@ -129,12 +129,12 @@ volumes:
 - [ ] PostgreSQL tiene healthcheck
 - [ ] Kafka depende de ZooKeeper
 - [ ] Apicurio depende de PostgreSQL con condition: service_healthy
-- [ ] `docker compose config --profiles infra` valida sin errores
+- [ ] `docker compose --profile infra config` valida sin errores
 
 ## Validación
 
 ```bash
-docker compose config --profiles infra
+docker compose --profile infra config
 ```
 
 ## Reglas obligatorias
