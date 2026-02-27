@@ -1,0 +1,19 @@
+{
+  "issueNumber": 0,
+  "issueTitle": "Título de la GitHub Issue",
+  "branchName": "ralph/issue-0-descripcion-corta",
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "Primera subtarea",
+      "promptFile": "prompt-1.md",
+      "passes": false
+    },
+    {
+      "id": 2,
+      "title": "Segunda subtarea",
+      "promptFile": "prompt-2.md",
+      "passes": false
+    }
+  ]
+}

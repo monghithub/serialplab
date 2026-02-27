@@ -1,0 +1,36 @@
+# Tarea: {título}
+
+## Issue: #{número}
+## Subtarea: {n} de {total}
+
+## Objetivo
+
+{Descripción concreta de qué hacer. Una o dos frases.}
+
+## Ficheros a crear/modificar
+
+- {path/al/fichero1}
+- {path/al/fichero2}
+
+## Contexto
+
+{Fragmentos relevantes de specs/doc. NO ficheros completos.
+Solo incluir lo que el LLM necesita para completar la subtarea.
+Mantener bajo 20k tokens de contexto.}
+
+## Criterios de aceptación
+
+- [ ] {Criterio verificable 1}
+- [ ] {Criterio verificable 2}
+- [ ] {Criterio verificable 3}
+
+## Validación
+
+```bash
+{Comando(s) a ejecutar para verificar: build, test, lint, etc.}
+```
+
+## Reglas obligatorias
+
+- **Sin sudo:** NO ejecutes comandos con `sudo`. Si necesitas instalar algo con sudo, crea una GitHub Issue con `gh issue create --title "Instalar {paquete}" --body "Se necesita: {detalle}"` y marca esta subtarea como bloqueada.
+- **Commit siempre:** Al terminar, haz `git add` + `git commit` + `git push` de todos los ficheros generados/modificados, INCLUSO si la validación falla. El código se corregirá en la siguiente iteración.
