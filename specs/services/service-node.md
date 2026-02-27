@@ -10,7 +10,7 @@ Servicio basado en **Node.js 22 + Express/Fastify**. Prototipado rápido y ampli
 |---|---|
 | Lenguaje | Node.js 22 (TypeScript) |
 | Framework | Express / Fastify |
-| Puerto | 8084 |
+| Puerto | 11004 |
 | Build | `npm run build` |
 | Base de datos | PostgreSQL 16 (schema: `node`) |
 
@@ -19,7 +19,7 @@ Servicio basado en **Node.js 22 + Express/Fastify**. Prototipado rápido y ampli
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET | `/health` | Readiness/liveness probe |
-| POST | `/publish/:protocol/:broker` | Publica mensaje con protocolo y broker indicados |
+| POST | `/publish/:target/:protocol/:broker` | Publica mensaje al servicio destino con protocolo y broker indicados |
 | GET | `/messages` | Lista mensajes recibidos |
 
 ## Protocolos soportados

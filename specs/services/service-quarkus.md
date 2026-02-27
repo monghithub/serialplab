@@ -10,7 +10,7 @@ Servicio basado en **Java 21 + Quarkus**. Compilación nativa con GraalVM, bajo 
 |---|---|
 | Lenguaje | Java 21 |
 | Framework | Quarkus |
-| Puerto | 8082 |
+| Puerto | 11002 |
 | Build | Maven (Quarkus BOM) |
 | Base de datos | PostgreSQL 16 (schema: `quarkus`) |
 
@@ -19,7 +19,7 @@ Servicio basado en **Java 21 + Quarkus**. Compilación nativa con GraalVM, bajo 
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET | `/health` | Readiness/liveness probe |
-| POST | `/publish/{protocol}/{broker}` | Publica mensaje con protocolo y broker indicados |
+| POST | `/publish/{target}/{protocol}/{broker}` | Publica mensaje al servicio destino con protocolo y broker indicados |
 | GET | `/messages` | Lista mensajes recibidos |
 
 ## Protocolos soportados

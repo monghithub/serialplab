@@ -53,7 +53,7 @@ info:
 
 servers:
   kafka:
-    host: kafka:9092
+    host: kafka:11021
     protocol: kafka
 
 channels:

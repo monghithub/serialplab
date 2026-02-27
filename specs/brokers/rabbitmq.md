@@ -9,7 +9,7 @@ Broker de mensajería basado en AMQP 0-9-1. Routing flexible mediante exchanges 
 | Propiedad | Valor |
 |---|---|
 | Protocolo nativo | AMQP 0-9-1 |
-| Puertos | 5672 (AMQP), 15672 (Management UI) |
+| Puertos | 11022 (AMQP), 11023 (Management UI) |
 | Imagen Docker | `rabbitmq:management` |
 | Dependencias | Ninguna |
 | Paradigma | Cola de mensajes, routing por exchange |
@@ -23,8 +23,8 @@ rabbitmq:
     RABBITMQ_DEFAULT_USER: guest
     RABBITMQ_DEFAULT_PASS: guest
   ports:
-    - "5672:5672"
-    - "15672:15672"
+    - "11022:11022"
+    - "11023:11023"
 ```
 
 ## Colas y exchanges utilizados

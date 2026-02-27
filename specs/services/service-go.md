@@ -10,7 +10,7 @@ Servicio basado en **Go 1.22+**. Alto rendimiento, binarios estáticos y bajo co
 |---|---|
 | Lenguaje | Go 1.22+ |
 | Framework | net/http (stdlib) / Chi |
-| Puerto | 8083 |
+| Puerto | 11003 |
 | Build | `go build` |
 | Base de datos | PostgreSQL 16 (schema: `goservice`) |
 
@@ -19,7 +19,7 @@ Servicio basado en **Go 1.22+**. Alto rendimiento, binarios estáticos y bajo co
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET | `/health` | Readiness/liveness probe |
-| POST | `/publish/{protocol}/{broker}` | Publica mensaje con protocolo y broker indicados |
+| POST | `/publish/{target}/{protocol}/{broker}` | Publica mensaje al servicio destino con protocolo y broker indicados |
 | GET | `/messages` | Lista mensajes recibidos |
 
 ## Protocolos soportados

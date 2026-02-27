@@ -6,6 +6,7 @@ Documentación modular de los componentes del proyecto. Cada spec describe un se
 
 | Carpeta | Descripción | Cantidad |
 |---|---|---|
+| [frontend/](frontend/) | Frontend web (orquestación de peticiones) | 1 |
 | [services/](services/) | Servicios de aplicación (stacks tecnológicos) | 4 |
 | [protocols/](protocols/) | Protocolos de serialización | 7 |
 | [brokers/](brokers/) | Sistemas de mensajería | 3 |
@@ -16,6 +17,9 @@ Documentación modular de los componentes del proyecto. Cada spec describe un se
 Las specs de servicios enlazan a los protocolos y brokers que soportan. Esto permite consultar las dependencias y librerías específicas de cada combinación.
 
 ```
+frontend/frontend-*.md
+    └── enlaza a → services/*.md    (servicios backend consumidos)
+
 services/service-*.md
     ├── enlaza a → protocols/*.md   (protocolos soportados)
     ├── enlaza a → brokers/*.md     (brokers soportados)

@@ -6,7 +6,7 @@ Sistema de gestión de bases de datos relacional (RDBMS) open source, conocido p
 
 - **Licencia:** PostgreSQL License (permisiva, similar a BSD/MIT)
 - **Creador:** UC Berkeley / PostgreSQL Global Development Group
-- **Puerto por defecto:** 5432
+- **Puerto en serialplab:** 11010
 
 ## Conceptos clave
 
@@ -43,7 +43,7 @@ docker run -d --name postgres \
   -e POSTGRES_USER=serialplab \
   -e POSTGRES_PASSWORD=serialplab \
   -e POSTGRES_DB=serialplab \
-  -p 5432:5432 \
+  -p 11010:5432 \
   postgres:16
 
 # Cliente CLI

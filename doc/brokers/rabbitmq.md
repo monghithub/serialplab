@@ -7,7 +7,7 @@ Broker de mensajería open source que implementa AMQP (Advanced Message Queuing 
 - **Licencia:** MPL 2.0 (Mozilla Public License)
 - **Creador:** Rabbit Technologies / VMware
 - **Protocolo:** AMQP 0-9-1 (también STOMP, MQTT)
-- **Puertos por defecto:** 5672 (AMQP), 15672 (Management UI)
+- **Puertos en serialplab:** 11022 (AMQP), 11023 (Management UI)
 
 ## Conceptos clave
 
@@ -46,12 +46,12 @@ graph LR
 
 ```bash
 docker run -d --name rabbitmq \
-  -p 5672:5672 \
-  -p 15672:15672 \
+  -p 11022:5672 \
+  -p 11023:15672 \
   rabbitmq:management
 ```
 
-Management UI disponible en `http://localhost:15672` (guest/guest).
+Management UI disponible en `http://localhost:11023` (guest/guest).
 
 ## Uso en serialplab
 

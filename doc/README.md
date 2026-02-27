@@ -22,6 +22,12 @@ Referencia técnica de cada tecnología utilizada en el proyecto. Aquí se docum
 | Quarkus | [quarkus.md](frameworks/quarkus.md) |
 | Express / Fastify | [express-fastify.md](frameworks/express-fastify.md) |
 
+### Frontend
+
+| Tecnología | Doc |
+|---|---|
+| Angular | [angular.md](frontend/angular.md) |
+
 ### Serialización
 
 | Tecnología | Doc |

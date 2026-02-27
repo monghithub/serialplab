@@ -6,7 +6,7 @@ Servicio centralizado de coordinación para sistemas distribuidos. Proporciona c
 
 - **Licencia:** Apache 2.0
 - **Creador:** Yahoo! / Apache Software Foundation
-- **Puerto por defecto:** 2181
+- **Puerto en serialplab:** 11020
 
 ## Conceptos clave
 
@@ -47,8 +47,8 @@ graph TB
 
 ```bash
 docker run -d --name zookeeper \
-  -e ZOOKEEPER_CLIENT_PORT=2181 \
-  -p 2181:2181 \
+  -e ZOOKEEPER_CLIENT_PORT=11020 \
+  -p 11020:11020 \
   confluentinc/cp-zookeeper:7.6.0
 ```
 

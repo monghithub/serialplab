@@ -10,7 +10,7 @@ Servicio basado en **Java 21 + Spring Boot 3**. Ecosistema maduro con amplio sop
 |---|---|
 | Lenguaje | Java 21 |
 | Framework | Spring Boot 3 |
-| Puerto | 8081 |
+| Puerto | 11001 |
 | Build | Maven / Gradle |
 | Base de datos | PostgreSQL 16 (schema: `springboot`) |
 
@@ -19,7 +19,7 @@ Servicio basado en **Java 21 + Spring Boot 3**. Ecosistema maduro con amplio sop
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET | `/health` | Readiness/liveness probe |
-| POST | `/publish/{protocol}/{broker}` | Publica mensaje con protocolo y broker indicados |
+| POST | `/publish/{target}/{protocol}/{broker}` | Publica mensaje al servicio destino con protocolo y broker indicados |
 | GET | `/messages` | Lista mensajes recibidos |
 
 ## Protocolos soportados

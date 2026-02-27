@@ -9,7 +9,7 @@ Sistema de mensajería ligero y de alta performance. Pub/sub simple con baja lat
 | Propiedad | Valor |
 |---|---|
 | Protocolo nativo | TCP texto/binario |
-| Puertos | 4222 (cliente), 8222 (monitoring) |
+| Puertos | 11024 (cliente), 11025 (monitoring) |
 | Imagen Docker | `nats:latest` |
 | Dependencias | Ninguna |
 | Paradigma | Pub/sub, request/reply, queue groups |
@@ -19,10 +19,10 @@ Sistema de mensajería ligero y de alta performance. Pub/sub simple con baja lat
 ```yaml
 nats:
   image: nats:latest
-  command: ["--js", "--http_port", "8222"]
+  command: ["--js", "--http_port", "11025"]
   ports:
-    - "4222:4222"
-    - "8222:8222"
+    - "11024:11024"
+    - "11025:11025"
 ```
 
 ## Subjects utilizados

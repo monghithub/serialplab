@@ -7,7 +7,7 @@ Plataforma de streaming de eventos distribuida, capaz de manejar billones de eve
 - **Licencia:** Apache 2.0
 - **Creador:** LinkedIn / Apache Software Foundation
 - **Protocolo:** TCP binario propietario
-- **Puerto por defecto:** 9092
+- **Puerto en serialplab:** 11021
 
 ## Conceptos clave
 
@@ -50,13 +50,14 @@ graph TB
 ```bash
 # Docker Compose (con ZooKeeper)
 docker run -d --name zookeeper \
-  -e ZOOKEEPER_CLIENT_PORT=2181 \
+  -e ZOOKEEPER_CLIENT_PORT=11020 \
+  -p 11020:11020 \
   confluentinc/cp-zookeeper:7.6.0
 
 docker run -d --name kafka \
-  -e KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181 \
-  -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 \
-  -p 9092:9092 \
+  -e KAFKA_ZOOKEEPER_CONNECT=zookeeper:11020 \
+  -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:11021 \
+  -p 11021:11021 \
   confluentinc/cp-kafka:7.6.0
 ```
 

@@ -38,10 +38,10 @@ Todos los servicios se ejecutan en contenedores Docker y exponen un puerto HTTP 
 
 | Servicio | Stack | Puerto base | Notas |
 |---|---|---|---|
-| `service-springboot` | Java 21 + Spring Boot 3 | 8081 | Ecosistema maduro, amplio soporte de serialización |
-| `service-quarkus` | Java 21 + Quarkus | 8082 | Compilación nativa (GraalVM), bajo consumo de memoria |
-| `service-go` | Go 1.22+ | 8083 | Alto rendimiento, binarios estáticos |
-| `service-node` | Node.js 22 + Express/Fastify | 8084 | Prototipado rápido, ecosistema npm |
+| `service-springboot` | Java 21 + Spring Boot 3 | 11001 | Ecosistema maduro, amplio soporte de serialización |
+| `service-quarkus` | Java 21 + Quarkus | 11002 | Compilación nativa (GraalVM), bajo consumo de memoria |
+| `service-go` | Go 1.22+ | 11003 | Alto rendimiento, binarios estáticos |
+| `service-node` | Node.js 22 + Express/Fastify | 11004 | Prototipado rápido, ecosistema npm |
 
 Cada servicio:
 
@@ -88,9 +88,9 @@ schemas/
 
 | # | Broker | Protocolo nativo | Puerto(s) | Imagen Docker |
 |---|---|---|---|---|
-| 1 | **Apache Kafka** | TCP binario | 9092 | `confluentinc/cp-kafka` |
-| 2 | **RabbitMQ** | AMQP 0-9-1 | 5672, 15672 (mgmt) | `rabbitmq:management` |
-| 3 | **NATS** | TCP texto/binario | 4222, 8222 (monitor) | `nats:latest` |
+| 1 | **Apache Kafka** | TCP binario | 11021 | `confluentinc/cp-kafka` |
+| 2 | **RabbitMQ** | AMQP 0-9-1 | 11022, 11023 (mgmt) | `rabbitmq:management` |
+| 3 | **NATS** | TCP texto/binario | 11024, 11025 (monitor) | `nats:latest` |
 
 Estos 3 brokers cubren los paradigmas principales:
 
@@ -109,7 +109,7 @@ Estos 3 brokers cubren los paradigmas principales:
 | Componente | Detalle |
 |---|---|
 | Registro | Apicurio Registry |
-| Puerto | 8080 |
+| Puerto | 11011 |
 | Imagen Docker | `apicurio/apicurio-registry:2.6.2.Final` |
 | Storage | PostgreSQL |
 | API compatible | Confluent Schema Registry v7 |
@@ -123,7 +123,7 @@ Apicurio Registry centraliza la gestión de schemas de serialización (Avro, Pro
 | Componente | Detalle |
 |---|---|
 | Motor | PostgreSQL 16 |
-| Puerto | 5432 |
+| Puerto | 11010 |
 | Imagen Docker | `postgres:16` |
 | Aislamiento | Un schema por servicio (`springboot`, `quarkus`, `goservice`, `node`) |
 
@@ -192,36 +192,41 @@ La infraestructura se orquesta con Docker Compose. Se divide en dos perfiles:
 
 ```yaml
 services:
-  postgres:           # PostgreSQL 16
-  zookeeper:          # Dependencia de Kafka
-  kafka:              # Apache Kafka
-  rabbitmq:           # RabbitMQ + Management UI
-  nats:               # NATS
-  apicurio-registry:  # Apicurio Registry (schemas)
+  postgres:           # PostgreSQL 16 (:11010)
+  zookeeper:          # Dependencia de Kafka (:11020)
+  kafka:              # Apache Kafka (:11021)
+  rabbitmq:           # RabbitMQ + Management UI (:11022, :11023)
+  nats:               # NATS (:11024, :11025)
+  apicurio-registry:  # Apicurio Registry (:11011)
 ```
 
 ### Perfil `app` — Servicios de aplicación
 
 ```yaml
 services:
+  frontend-angular:
+    build: ./frontend-angular
+    ports: ["11000:11000"]
+    depends_on: [service-springboot, service-quarkus, service-go, service-node]
+
   service-springboot:
     build: ./service-springboot
-    ports: ["8081:8081"]
+    ports: ["11001:11001"]
     depends_on: [postgres, kafka, rabbitmq, nats]
 
   service-quarkus:
     build: ./service-quarkus
-    ports: ["8082:8082"]
+    ports: ["11002:11002"]
     depends_on: [postgres, kafka, rabbitmq, nats]
 
   service-go:
     build: ./service-go
-    ports: ["8083:8083"]
+    ports: ["11003:11003"]
     depends_on: [postgres, kafka, rabbitmq, nats]
 
   service-node:
     build: ./service-node
-    ports: ["8084:8084"]
+    ports: ["11004:11004"]
     depends_on: [postgres, kafka, rabbitmq, nats]
 ```
 
@@ -243,15 +248,33 @@ docker compose down
 
 ---
 
+## 9. Frontend
+
+| Aplicación | Stack | Puerto | Notas |
+|---|---|---|---|
+| `frontend-angular` | Angular 19 + TypeScript | 11000 | SPA que orquesta peticiones CRUD entre servicios |
+
+El frontend permite seleccionar servicio origen, servicio destino, protocolo de serialización y broker de mensajería. Envía peticiones HTTP al servicio origen, que se encarga de serializar y publicar al broker correspondiente.
+
+- Spec: [`specs/frontend/frontend-angular.md`](specs/frontend/frontend-angular.md)
+- Doc: [`doc/frontend/angular.md`](doc/frontend/angular.md)
+
+---
+
 ## Diagrama de alto nivel
 
 ```
 ┌──────────────────────────────────────────────────────────┐
 │                        serialplab                         │
 │                                                          │
+│                 ┌──────────────────┐                     │
+│                 │ frontend-angular │                     │
+│                 │     :11000       │                     │
+│                 └────────┬─────────┘                     │
+│                          │ HTTP                          │
 │  ┌──────────┐ ┌──────────┐ ┌────────┐ ┌────────┐       │
 │  │springboot│ │ quarkus  │ │   go   │ │  node  │       │
-│  │  :8081   │ │  :8082   │ │ :8083  │ │ :8084  │       │
+│  │  :11001  │ │  :11002  │ │ :11003 │ │ :11004 │       │
 │  └────┬─────┘ └────┬─────┘ └───┬────┘ └───┬────┘       │
 │       │             │           │           │            │
 │       └─────────────┴─────┬─────┴───────────┘            │
@@ -266,16 +289,16 @@ docker compose down
 │            ┌────────┤    ┌────┴────────┐                 │
 │            │        │    │  Apicurio   │                 │
 │            │        │    │  Registry   │                 │
-│            │        │    │   :8080     │                 │
+│            │        │    │   :11011    │                 │
 │         ┌──┴──┐ ┌───┴───┐└────────────┘                 │
 │         │Kafka│ │Rabbit │      ┌──────┐                 │
-│         │9092 │ │ 5672  │      │ NATS │                 │
-│         └─────┘ └───────┘      │ 4222 │                 │
+│         │11021│ │ 11022 │      │ NATS │                 │
+│         └─────┘ └───────┘      │11024 │                 │
 │                                └──────┘                 │
 │                           │                              │
 │                    ┌──────┴──────┐                       │
 │                    │ PostgreSQL  │                       │
-│                    │    5432     │                       │
+│                    │   11010     │                       │
 │                    └─────────────┘                       │
 └──────────────────────────────────────────────────────────┘
 ```

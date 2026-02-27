@@ -8,7 +8,7 @@ Registro centralizado de schemas y APIs para serialplab. Almacena y gestiona las
 
 | Propiedad | Valor |
 |---|---|
-| Puerto | 8080 |
+| Puerto | 11011 |
 | Imagen Docker | `apicurio/apicurio-registry:2.6.2.Final` |
 | Storage backend | PostgreSQL (producción) / In-memory (desarrollo) |
 | API compatible | Confluent Schema Registry v7 |
@@ -24,11 +24,11 @@ apicurio-registry:
   environment:
     REGISTRY_STORAGE_KIND: sql
     REGISTRY_STORAGE_SQL_KIND: postgresql
-    REGISTRY_DATASOURCE_URL: jdbc:postgresql://postgres:5432/registry
+    REGISTRY_DATASOURCE_URL: jdbc:postgresql://postgres:11010/registry
     REGISTRY_DATASOURCE_USERNAME: registry
     REGISTRY_DATASOURCE_PASSWORD: registry
   ports:
-    - "8080:8080"
+    - "11011:11011"
 ```
 
 ## Schemas registrados

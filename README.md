@@ -8,11 +8,13 @@ Proof of Concept (PoC) que evalúa la intercomunicación entre servicios heterog
 
 ```mermaid
 graph TB
+    FE["frontend-angular<br/>Angular 19<br/>:11000"]
+
     subgraph Servicios
-        SB["service-springboot<br/>Java 21 + Spring Boot 3<br/>:8081"]
-        QK["service-quarkus<br/>Java 21 + Quarkus<br/>:8082"]
-        GO["service-go<br/>Go 1.22+<br/>:8083"]
-        ND["service-node<br/>Node.js 22<br/>:8084"]
+        SB["service-springboot<br/>Java 21 + Spring Boot 3<br/>:11001"]
+        QK["service-quarkus<br/>Java 21 + Quarkus<br/>:11002"]
+        GO["service-go<br/>Go 1.22+<br/>:11003"]
+        ND["service-node<br/>Node.js 22<br/>:11004"]
     end
 
     subgraph Serialización["Capa de serialización (x7)"]
@@ -26,13 +28,14 @@ graph TB
     end
 
     subgraph Brokers["Brokers de mensajería"]
-        KFK["Apache Kafka<br/>:9092"]
-        RMQ["RabbitMQ<br/>:5672"]
-        NATS["NATS<br/>:4222"]
+        KFK["Apache Kafka<br/>:11021"]
+        RMQ["RabbitMQ<br/>:11022"]
+        NATS["NATS<br/>:11024"]
     end
 
-    PG[("PostgreSQL 16<br/>:5432")]
+    PG[("PostgreSQL 16<br/>:11010")]
 
+    FE -->|HTTP| SB & QK & GO & ND
     SB & QK & GO & ND --> Serialización
     Serialización --> KFK & RMQ & NATS
     SB & QK & GO & ND --> PG
@@ -42,6 +45,7 @@ graph TB
 
 ```mermaid
 sequenceDiagram
+    participant FE as Frontend Angular
     participant P as Servicio Publisher
     participant S as Capa Serialización
     participant B as Broker
@@ -49,6 +53,7 @@ sequenceDiagram
     participant C as Servicio Consumer
     participant DB as PostgreSQL
 
+    FE->>P: POST /publish/{target}/{protocol}/{broker}
     P->>S: Objeto del dominio
     S->>S: Serializar (protocolo elegido)
     S->>B: bytes[]
@@ -56,6 +61,7 @@ sequenceDiagram
     D->>D: Deserializar (protocolo elegido)
     D->>C: Objeto del dominio
     C->>DB: Persistir mensaje + métricas
+    P-->>FE: Respuesta HTTP
 ```
 
 ## Infraestructura Docker
@@ -63,34 +69,42 @@ sequenceDiagram
 ```mermaid
 graph LR
     subgraph infra["Perfil: infra"]
-        ZK["ZooKeeper<br/>:2181"]
-        KFK["Kafka<br/>:9092"]
-        RMQ["RabbitMQ<br/>:5672 / :15672"]
-        NATS["NATS<br/>:4222 / :8222"]
-        PG[("PostgreSQL<br/>:5432")]
-        AR["Apicurio Registry<br/>:8080"]
+        ZK["ZooKeeper<br/>:11020"]
+        KFK["Kafka<br/>:11021"]
+        RMQ["RabbitMQ<br/>:11022 / :11023"]
+        NATS["NATS<br/>:11024 / :11025"]
+        PG[("PostgreSQL<br/>:11010")]
+        AR["Apicurio Registry<br/>:11011"]
         ZK --> KFK
         PG --> AR
     end
 
     subgraph app["Perfil: app"]
-        SB["springboot :8081"]
-        QK["quarkus :8082"]
-        GO["go :8083"]
-        ND["node :8084"]
+        FE["angular :11000"]
+        SB["springboot :11001"]
+        QK["quarkus :11002"]
+        GO["go :11003"]
+        ND["node :11004"]
     end
 
+    FE -->|HTTP| SB & QK & GO & ND
     SB & QK & GO & ND --> KFK & RMQ & NATS & PG & AR
 ```
+
+## Frontend
+
+| Aplicación | Stack | Puerto | Spec |
+|---|---|---|---|
+| `frontend-angular` | Angular 19 + TypeScript | 11000 | [spec](specs/frontend/frontend-angular.md) |
 
 ## Servicios
 
 | Servicio | Stack | Puerto | Spec |
 |---|---|---|---|
-| `service-springboot` | Java 21 + Spring Boot 3 | 8081 | [spec](specs/services/service-springboot.md) |
-| `service-quarkus` | Java 21 + Quarkus | 8082 | [spec](specs/services/service-quarkus.md) |
-| `service-go` | Go 1.22+ | 8083 | [spec](specs/services/service-go.md) |
-| `service-node` | Node.js 22 + Express/Fastify | 8084 | [spec](specs/services/service-node.md) |
+| `service-springboot` | Java 21 + Spring Boot 3 | 11001 | [spec](specs/services/service-springboot.md) |
+| `service-quarkus` | Java 21 + Quarkus | 11002 | [spec](specs/services/service-quarkus.md) |
+| `service-go` | Go 1.22+ | 11003 | [spec](specs/services/service-go.md) |
+| `service-node` | Node.js 22 + Express/Fastify | 11004 | [spec](specs/services/service-node.md) |
 
 ## Protocolos de serialización
 
@@ -108,9 +122,9 @@ graph LR
 
 | Broker | Protocolo nativo | Puertos | Spec |
 |---|---|---|---|
-| Apache Kafka | TCP binario | 9092 | [spec](specs/brokers/kafka.md) |
-| RabbitMQ | AMQP 0-9-1 | 5672, 15672 | [spec](specs/brokers/rabbitmq.md) |
-| NATS | TCP texto/binario | 4222, 8222 | [spec](specs/brokers/nats.md) |
+| Apache Kafka | TCP binario | 11021 | [spec](specs/brokers/kafka.md) |
+| RabbitMQ | AMQP 0-9-1 | 11022, 11023 | [spec](specs/brokers/rabbitmq.md) |
+| NATS | TCP texto/binario | 11024, 11025 | [spec](specs/brokers/nats.md) |
 
 ## Matriz de compatibilidad
 
@@ -163,6 +177,7 @@ serialplab/
 ├── doc/                         ← documentación técnica de referencia
 │   ├── lenguajes/               ← Java, Go, Node.js/TypeScript
 │   ├── frameworks/              ← Spring Boot, Quarkus, Express/Fastify
+│   ├── frontend/                ← Angular
 │   ├── serializacion/           ← Protobuf, Avro, Thrift, MessagePack, ...
 │   ├── brokers/                 ← Kafka, RabbitMQ, NATS
 │   ├── bases-de-datos/          ← PostgreSQL
@@ -171,11 +186,13 @@ serialplab/
 │   └── especificaciones/        ← AsyncAPI
 ├── specs/                       ← specs de uso en serialplab
 │   ├── services/                ← specs por servicio
+│   ├── frontend/                ← specs del frontend
 │   ├── protocols/               ← specs por protocolo
 │   ├── brokers/                 ← specs por broker
 │   └── registros/               ← specs de registros de schemas
 ├── schemas/                     ← definiciones de schemas compartidos
 ├── asyncapi/                    ← contratos AsyncAPI 3.0
+├── frontend-angular/
 ├── service-springboot/
 ├── service-quarkus/
 ├── service-go/

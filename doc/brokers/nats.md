@@ -7,7 +7,7 @@ Sistema de mensajería ligero y de alto rendimiento, diseñado para cloud-native
 - **Licencia:** Apache 2.0
 - **Creador:** Synadia Communications
 - **Protocolo:** TCP texto/binario
-- **Puertos por defecto:** 4222 (cliente), 8222 (monitoring)
+- **Puertos en serialplab:** 11024 (cliente), 11025 (monitoring)
 
 ## Conceptos clave
 
@@ -43,18 +43,18 @@ graph TB
 
 ```bash
 docker run -d --name nats \
-  -p 4222:4222 \
-  -p 8222:8222 \
+  -p 11024:4222 \
+  -p 11025:8222 \
   nats:latest
 
 # Con JetStream
 docker run -d --name nats \
-  -p 4222:4222 \
-  -p 8222:8222 \
+  -p 11024:4222 \
+  -p 11025:8222 \
   nats:latest -js
 ```
 
-Monitoring disponible en `http://localhost:8222`.
+Monitoring disponible en `http://localhost:11025`.
 
 ## Uso en serialplab
 

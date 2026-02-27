@@ -65,13 +65,13 @@ npm install fastify
 import express from 'express';
 const app = express();
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
-app.listen(8084);
+app.listen(11004);
 
 // Fastify
 import Fastify from 'fastify';
 const app = Fastify();
 app.get('/health', async () => ({ status: 'ok' }));
-app.listen({ port: 8084 });
+app.listen({ port: 11004 });
 ```
 
 ## Uso en serialplab

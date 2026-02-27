@@ -9,7 +9,7 @@ Plataforma de streaming distribuida basada en un log de eventos. Alto throughput
 | Propiedad | Valor |
 |---|---|
 | Protocolo nativo | TCP binario |
-| Puerto | 9092 |
+| Puerto | 11021 |
 | Imagen Docker | `confluentinc/cp-kafka` |
 | Dependencias | ZooKeeper o KRaft (modo standalone) |
 | Paradigma | Log distribuido, pub/sub con consumer groups |
@@ -20,9 +20,9 @@ Plataforma de streaming distribuida basada en un log de eventos. Alto throughput
 zookeeper:
   image: confluentinc/cp-zookeeper:7.6.0
   environment:
-    ZOOKEEPER_CLIENT_PORT: 2181
+    ZOOKEEPER_CLIENT_PORT: 11020
   ports:
-    - "2181:2181"
+    - "11020:11020"
 
 kafka:
   image: confluentinc/cp-kafka:7.6.0
@@ -30,11 +30,11 @@ kafka:
     - zookeeper
   environment:
     KAFKA_BROKER_ID: 1
-    KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-    KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+    KAFKA_ZOOKEEPER_CONNECT: zookeeper:11020
+    KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:11021
     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
   ports:
-    - "9092:9092"
+    - "11021:11021"
 ```
 
 ## Tópicos utilizados

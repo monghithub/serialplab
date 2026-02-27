@@ -6,7 +6,7 @@ Registro de schemas y APIs open source que proporciona un almacén centralizado 
 
 - **Licencia:** Apache 2.0
 - **Creador:** Red Hat / Apicurio community
-- **Puerto por defecto:** 8080
+- **Puerto en serialplab:** 11011
 - **Versión:** 2.x / 3.x
 
 ## Conceptos clave
@@ -27,7 +27,7 @@ Registro de schemas y APIs open source que proporciona un almacén centralizado 
 
 ```mermaid
 graph TB
-    PROD["Producer"] -->|"1. Registrar schema"| AR["Apicurio Registry :8080"]
+    PROD["Producer"] -->|"1. Registrar schema"| AR["Apicurio Registry :11011"]
     PROD -->|"2. Serializar con schema ID"| BROKER["Broker (Kafka/RabbitMQ)"]
     BROKER --> CONS["Consumer"]
     CONS -->|"3. Obtener schema por ID"| AR
@@ -62,16 +62,16 @@ graph TB
 ```bash
 # In-memory (desarrollo)
 docker run -d --name apicurio-registry \
-  -p 8080:8080 \
+  -p 11011:8080 \
   -e REGISTRY_STORAGE_KIND=mem \
   apicurio/apicurio-registry:2.6.2.Final
 
 # Con PostgreSQL
 docker run -d --name apicurio-registry \
-  -p 8080:8080 \
+  -p 11011:8080 \
   -e REGISTRY_STORAGE_KIND=sql \
   -e REGISTRY_STORAGE_SQL_KIND=postgresql \
-  -e REGISTRY_DATASOURCE_URL=jdbc:postgresql://postgres:5432/registry \
+  -e REGISTRY_DATASOURCE_URL=jdbc:postgresql://postgres:11010/registry \
   -e REGISTRY_DATASOURCE_USERNAME=registry \
   -e REGISTRY_DATASOURCE_PASSWORD=registry \
   apicurio/apicurio-registry:2.6.2.Final
@@ -81,22 +81,22 @@ docker run -d --name apicurio-registry \
 
 ```bash
 # Listar artifacts
-curl http://localhost:8080/apis/registry/v3/groups/default/artifacts
+curl http://localhost:11011/apis/registry/v3/groups/default/artifacts
 
 # Registrar un schema Avro
-curl -X POST http://localhost:8080/apis/registry/v3/groups/default/artifacts \
+curl -X POST http://localhost:11011/apis/registry/v3/groups/default/artifacts \
   -H "Content-Type: application/json" \
   -H "X-Registry-ArtifactId: message" \
   -H "X-Registry-ArtifactType: AVRO" \
   -d @schemas/avro/message.avsc
 
 # Obtener schema por ID
-curl http://localhost:8080/apis/registry/v3/groups/default/artifacts/message/versions/latest/content
+curl http://localhost:11011/apis/registry/v3/groups/default/artifacts/message/versions/latest/content
 ```
 
 ### UI
 
-Apicurio Registry incluye una UI web accesible en `http://localhost:8080/ui`.
+Apicurio Registry incluye una UI web accesible en `http://localhost:11011/ui`.
 
 ## Uso en serialplab
 
