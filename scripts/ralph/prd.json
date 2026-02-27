@@ -1,0 +1,19 @@
+{
+  "issueNumber": 1,
+  "issueTitle": "Infraestructura Docker Compose",
+  "branchName": "ralph/issue-1-docker-compose",
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "Crear docker-compose.yml con perfil infra",
+      "promptFile": "prompt-1.md",
+      "passes": false
+    },
+    {
+      "id": 2,
+      "title": "Crear Dockerfiles stub y perfil app",
+      "promptFile": "prompt-2.md",
+      "passes": false
+    }
+  ]
+}

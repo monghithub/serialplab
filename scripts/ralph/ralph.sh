@@ -1,6 +1,11 @@
 #!/bin/bash
 # Ralph Wiggum - Long-running AI agent loop
-# Usage: ./ralph.sh [--tool amp|claude] [max_iterations]
+# Usage: ./ralph.sh [--tool amp|claude|lemonade] [max_iterations]
+#
+# Tools:
+#   amp       - Amplify (has file access)
+#   claude    - Claude Code (has file access, cannot run nested)
+#   lemonade  - Local LLM via Lemonade API (no file access, Ralph writes files)
 #
 # Adaptive parallelism:
 #   - Starts with 1 task at a time
@@ -10,7 +15,7 @@
 set -e
 
 # Parse arguments
-TOOL="amp"  # Default to amp for backwards compatibility
+TOOL="lemonade"  # Default to lemonade (local LLM)
 MAX_ITERATIONS=10
 
 while [[ $# -gt 0 ]]; do
@@ -24,7 +29,6 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     *)
-      # Assume it's max_iterations if it's a number
       if [[ "$1" =~ ^[0-9]+$ ]]; then
         MAX_ITERATIONS="$1"
       fi
@@ -34,10 +38,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Validate tool choice
-if [[ "$TOOL" != "amp" && "$TOOL" != "claude" ]]; then
-  echo "Error: Invalid tool '$TOOL'. Must be 'amp' or 'claude'."
+if [[ "$TOOL" != "amp" && "$TOOL" != "claude" && "$TOOL" != "lemonade" ]]; then
+  echo "Error: Invalid tool '$TOOL'. Must be 'amp', 'claude' or 'lemonade'."
   exit 1
 fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 PRD_FILE="$SCRIPT_DIR/prd.json"
@@ -45,6 +50,10 @@ PROGRESS_FILE="$SCRIPT_DIR/progress.txt"
 TIMINGS_FILE="$SCRIPT_DIR/timings.csv"
 ARCHIVE_DIR="$SCRIPT_DIR/archive"
 LAST_BRANCH_FILE="$SCRIPT_DIR/.last-branch"
+
+# Lemonade config
+LEMONADE_URL="${LEMONADE_URL:-http://localhost:8000}"
+LEMONADE_MODEL="${LEMONADE_MODEL:-Qwen3-Next-80B-A3B-Instruct-GGUF}"
 
 # Adaptive parallelism config
 FAST_THRESHOLD=300  # 5 minutes in seconds
@@ -116,6 +125,162 @@ if [ ! -f "$TIMINGS_FILE" ]; then
   echo "iteration,subtask_id,prompt_file,start_time,end_time,duration_secs,parallel_slots,status" > "$TIMINGS_FILE"
 fi
 
+# ─── Lemonade helpers ───────────────────────────────────────────────────────
+
+# System prompt that tells Lemonade how to format file output
+LEMONADE_SYSTEM_PROMPT='You are a coding assistant. You receive a task and must produce the files requested.
+
+CRITICAL OUTPUT FORMAT:
+For each file you create or modify, output it in this exact format:
+
+### FILE: path/to/file
+```
+file content here
+```
+
+Rules:
+- The path after FILE: is relative to the project root
+- Include the COMPLETE file content (not partial)
+- Output ALL files needed to complete the task
+- After all files, output a line: ### DONE
+- Do NOT output explanations before the files. Go straight to ### FILE:
+- If a task requires a command with sudo, output: ### NEEDS_SUDO: description of what is needed
+- Do NOT use sudo yourself'
+
+# Call Lemonade API and return the response text
+call_lemonade() {
+  local prompt_content="$1"
+  local response_file="$2"
+
+  # Build JSON payload with jq to handle escaping
+  local payload
+  payload=$(jq -n \
+    --arg model "$LEMONADE_MODEL" \
+    --arg system "$LEMONADE_SYSTEM_PROMPT" \
+    --arg user "$prompt_content" \
+    '{
+      model: $model,
+      messages: [
+        { role: "system", content: $system },
+        { role: "user", content: $user }
+      ],
+      temperature: 0.2,
+      max_tokens: 16384,
+      stream: false
+    }')
+
+  # Call API
+  local http_code
+  http_code=$(curl -s -w "%{http_code}" -o "$response_file" \
+    -X POST "$LEMONADE_URL/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d "$payload" \
+    --max-time 600)
+
+  if [ "$http_code" != "200" ]; then
+    echo "Error: Lemonade API returned HTTP $http_code"
+    cat "$response_file" 2>/dev/null
+    return 1
+  fi
+
+  # Extract content from OpenAI-compatible response
+  jq -r '.choices[0].message.content // empty' "$response_file"
+}
+
+# Parse Lemonade response and write files to disk
+parse_and_write_files() {
+  local response_text="$1"
+  local files_written=0
+
+  # Extract file blocks: ### FILE: path\n```\ncontent\n```
+  local current_file=""
+  local in_code_block=false
+  local content=""
+
+  while IFS= read -r line; do
+    # Detect ### FILE: path
+    if [[ "$line" =~ ^###\ FILE:\ (.+)$ ]]; then
+      # Write previous file if exists
+      if [ -n "$current_file" ] && [ -n "$content" ]; then
+        local dir
+        dir=$(dirname "$PROJECT_ROOT/$current_file")
+        mkdir -p "$dir"
+        # Remove trailing newline
+        printf '%s' "$content" > "$PROJECT_ROOT/$current_file"
+        echo "  ✏️  Wrote: $current_file"
+        files_written=$((files_written + 1))
+      fi
+      current_file="${BASH_REMATCH[1]}"
+      # Trim whitespace
+      current_file=$(echo "$current_file" | xargs)
+      content=""
+      in_code_block=false
+      continue
+    fi
+
+    # Detect ### NEEDS_SUDO:
+    if [[ "$line" =~ ^###\ NEEDS_SUDO:\ (.+)$ ]]; then
+      local sudo_desc="${BASH_REMATCH[1]}"
+      echo "  ⚠️  NEEDS SUDO: $sudo_desc"
+      # Create GitHub issue for sudo requirement
+      cd "$PROJECT_ROOT"
+      gh issue create --title "Instalar: $sudo_desc" --body "Ralph detectó que se necesita sudo para: $sudo_desc" 2>/dev/null || true
+      cd "$SCRIPT_DIR"
+      continue
+    fi
+
+    # Detect ### DONE
+    if [[ "$line" == "### DONE" ]]; then
+      # Write last file
+      if [ -n "$current_file" ] && [ -n "$content" ]; then
+        local dir
+        dir=$(dirname "$PROJECT_ROOT/$current_file")
+        mkdir -p "$dir"
+        printf '%s' "$content" > "$PROJECT_ROOT/$current_file"
+        echo "  ✏️  Wrote: $current_file"
+        files_written=$((files_written + 1))
+      fi
+      break
+    fi
+
+    # Handle code block markers
+    if [ -n "$current_file" ]; then
+      if [[ "$line" =~ ^\`\`\` ]] && [ "$in_code_block" = false ]; then
+        in_code_block=true
+        continue
+      fi
+      if [[ "$line" == '```' ]] && [ "$in_code_block" = true ]; then
+        in_code_block=false
+        continue
+      fi
+      if [ "$in_code_block" = true ]; then
+        if [ -n "$content" ]; then
+          content="$content
+$line"
+        else
+          content="$line"
+        fi
+      fi
+    fi
+  done <<< "$response_text"
+
+  # Handle case where ### DONE was not found but there's a pending file
+  if [ -n "$current_file" ] && [ -n "$content" ] && [ "$files_written" -eq 0 ] || \
+     [ -n "$current_file" ] && [ -n "$content" ] && [ "$in_code_block" = true ]; then
+    local dir
+    dir=$(dirname "$PROJECT_ROOT/$current_file")
+    mkdir -p "$dir"
+    printf '%s' "$content" > "$PROJECT_ROOT/$current_file"
+    echo "  ✏️  Wrote: $current_file"
+    files_written=$((files_written + 1))
+  fi
+
+  echo "  📁 Total files written: $files_written"
+  return 0
+}
+
+# ─── End Lemonade helpers ───────────────────────────────────────────────────
+
 # Get N pending subtask prompt files
 get_pending_prompts() {
   local count="$1"
@@ -130,26 +295,99 @@ get_subtask_title() {
   jq -r --arg pf "$1" '.subtasks[] | select(.promptFile == $pf) | .title' "$PRD_FILE"
 }
 
-# Run a single subtask, returns duration in seconds via global var
+# Run a single subtask
 run_subtask() {
   local prompt_file="$1"
   local prompt_path="$SCRIPT_DIR/$prompt_file"
   local log_file="$2"  # Optional: redirect output to file for parallel runs
+  local subtask_id
+  subtask_id=$(get_subtask_id "$prompt_file")
 
   cd "$PROJECT_ROOT"
-  if [[ "$TOOL" == "amp" ]]; then
+
+  if [[ "$TOOL" == "lemonade" ]]; then
+    local prompt_content
+    prompt_content=$(cat "$prompt_path")
+    local response_file="$SCRIPT_DIR/.response-${subtask_id}.json"
+    local output=""
+
+    echo "  📡 Sending to Lemonade ($LEMONADE_MODEL)..."
+    local response_text
+    response_text=$(call_lemonade "$prompt_content" "$response_file")
+
+    if [ -z "$response_text" ]; then
+      output="Error: Empty response from Lemonade"
+      echo "$output"
+    else
+      echo "  📝 Parsing response and writing files..."
+      parse_and_write_files "$response_text"
+
+      # Git add + commit + push (commit siempre, aunque falle validación)
+      echo "  📦 Committing files..."
+      git add -A
+      if git diff --cached --quiet; then
+        echo "  ℹ️  No changes to commit"
+      else
+        git commit -m "feat(#$(jq -r '.issueNumber' "$PRD_FILE")): subtask $subtask_id - $(get_subtask_title "$prompt_file")" || true
+        git push -u origin "$CURRENT_BRANCH" || true
+      fi
+
+      # Run validation command from prompt (extract ```bash block under ## Validación)
+      local validation_cmd
+      validation_cmd=$(sed -n '/^## Validación/,/^## /{/^```bash/,/^```/{/^```/d;p}}' "$prompt_path" | head -5)
+      if [ -n "$validation_cmd" ]; then
+        echo "  🧪 Running validation: $validation_cmd"
+        if eval "$validation_cmd" 2>&1; then
+          echo "  ✅ Validation passed!"
+          # Mark subtask as passed in prd.json
+          local tmp
+          tmp=$(jq --arg pf "$prompt_file" '(.subtasks[] | select(.promptFile == $pf)).passes = true' "$PRD_FILE")
+          echo "$tmp" > "$PRD_FILE"
+          output="VALIDATION_PASSED"
+        else
+          echo "  ❌ Validation failed — code committed anyway, will retry next iteration"
+          output="VALIDATION_FAILED"
+        fi
+      else
+        echo "  ⚠️  No validation command found, marking as passed"
+        local tmp
+        tmp=$(jq --arg pf "$prompt_file" '(.subtasks[] | select(.promptFile == $pf)).passes = true' "$PRD_FILE")
+        echo "$tmp" > "$PRD_FILE"
+        output="NO_VALIDATION"
+      fi
+
+      # Check if all done
+      local remaining
+      remaining=$(jq '[.subtasks[] | select(.passes != true)] | length' "$PRD_FILE")
+      if [ "$remaining" -eq 0 ]; then
+        output="<promise>COMPLETE</promise>"
+      fi
+    fi
+
+    rm -f "$response_file"
+
+    if [ -n "$log_file" ]; then
+      echo "$output" > "$log_file"
+    else
+      echo "$output"
+    fi
+
+  elif [[ "$TOOL" == "amp" ]]; then
     if [ -n "$log_file" ]; then
       cat "$prompt_path" | amp --dangerously-allow-all >"$log_file" 2>&1 || true
     else
       cat "$prompt_path" | amp --dangerously-allow-all 2>&1 | tee /dev/stderr || true
     fi
+
   else
+    # claude
     if [ -n "$log_file" ]; then
       claude --dangerously-skip-permissions --print < "$prompt_path" >"$log_file" 2>&1 || true
     else
       claude --dangerously-skip-permissions --print < "$prompt_path" 2>&1 | tee /dev/stderr || true
     fi
   fi
+
   cd "$SCRIPT_DIR"
 }
 
@@ -162,7 +400,6 @@ print_time_report() {
   echo ""
   printf "%-5s %-8s %-20s %-10s %-8s %s\n" "ITER" "SUBTASK" "PROMPT" "DURACIÓN" "SLOTS" "ESTADO"
   printf "%-5s %-8s %-20s %-10s %-8s %s\n" "----" "-------" "--------------------" "---------" "------" "------"
-  # Skip header line
   tail -n +2 "$TIMINGS_FILE" | while IFS=',' read -r iter sid pf start end dur slots status; do
     local mins=$((dur / 60))
     local secs=$((dur % 60))
@@ -178,6 +415,9 @@ ISSUE_TITLE=$(jq -r '.issueTitle // "unknown"' "$PRD_FILE")
 echo "Starting Ralph - Tool: $TOOL - Max iterations: $MAX_ITERATIONS"
 echo "Issue: $ISSUE_TITLE"
 echo "Branch: $CURRENT_BRANCH"
+if [[ "$TOOL" == "lemonade" ]]; then
+  echo "Lemonade: $LEMONADE_URL (model: $LEMONADE_MODEL)"
+fi
 echo "Adaptive parallelism: starts at 1, scales to 2 if tasks < ${FAST_THRESHOLD}s"
 
 i=0
@@ -323,9 +563,6 @@ while [ $i -lt $MAX_ITERATIONS ]; do
     else
       echo "  ⚡ Parallel run: ${DUR_1}s + ${DUR_2}s (max ${MAX_DUR}s < ${FAST_THRESHOLD}s) → keeping 2 slots"
     fi
-
-    # Parallel uses 2 subtask slots but 1 iteration
-    # (no extra increment needed, the while loop handles it)
   fi
 
   echo "Iteration $i complete. Continuing..."

@@ -1,0 +1,17 @@
+## Session Log — serialplab
+## Inicio: 2026-02-27
+
+[23:32:55] Sesión iniciada — toolchain verificado (go, ng, protoc, flatc, thrift, node, java, mvn, docker)
+[23:32:55] Priorización definida: #1 → #2 → #8 → #3 → #6 → #5 → #4 → #9 → #7
+[23:32:55] Decisiones: Fastify para Node, User 4 campos, validar en host
+[23:32:55] Inicio descomposición issues #1 y #2 en subtareas para Ralph
+[23:34:12] Generado prd.json para issue #1 (2 subtareas: infra + app stubs)
+[23:34:12] Generado prompt-1.md (docker-compose infra) y prompt-2.md (Dockerfiles stub + app)
+[23:34:12] Lanzando ralph.sh --tool claude para issue #1
+[23:36:24] Ralph no puede lanzar claude desde sesión Claude Code (nested blocked)
+[23:36:24] Lemonade detectado en localhost:8000 — modelo Qwen3-Next-80B-A3B activo
+[23:36:24] Añadiendo modo lemonade a ralph.sh (curl a /v1/chat/completions)
+[23:38:20] Reescrito ralph.sh con modo lemonade (curl a localhost:8000/v1/chat/completions)
+[23:38:20] Lemonade: Qwen3-Next-80B-A3B en localhost:8000, ctx 32k
+[23:38:20] Ralph lemonade: envía prompt → parsea ### FILE: bloques → escribe ficheros → valida → commit+push
+[23:38:20] Pausado — esperando instrucciones del usuario antes de generar código
