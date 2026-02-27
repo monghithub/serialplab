@@ -18,6 +18,8 @@ Crear Dockerfiles mínimos (stub) para los 5 servicios de aplicación y añadir 
 
 ## Contexto
 
+**CRÍTICO: NO incluir `version:` en el docker-compose.yml.** Usamos Docker Compose V2 (Compose Spec). El fichero debe empezar directamente con `services:`. Si pones `version: '3.x'` los profiles NO funcionarán y la validación fallará.
+
 Los Dockerfiles stub sirven para validar que docker-compose levanta todo. Cada uno debe:
 1. Usar una imagen base ligera (alpine o similar)
 2. Exponer su puerto

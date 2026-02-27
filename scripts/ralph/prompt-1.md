@@ -13,6 +13,8 @@ Crear `docker-compose.yml` en la raíz del proyecto con el perfil `infra` que le
 
 ## Contexto
 
+**CRÍTICO: NO incluir `version:` en el docker-compose.yml.** Usamos Docker Compose V2 (Compose Spec). El fichero debe empezar directamente con `services:`. Si pones `version: '3.x'` los profiles NO funcionarán y la validación fallará.
+
 Configuración exacta de cada servicio según las specs:
 
 ### PostgreSQL 16
