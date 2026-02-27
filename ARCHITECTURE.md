@@ -26,6 +26,9 @@ La carpeta [`specs/`](specs/) contiene documentación modular de cada componente
 - [`specs/services/`](specs/services/) — Specs de cada servicio (stack, librerías, endpoints).
 - [`specs/protocols/`](specs/protocols/) — Specs de cada protocolo de serialización.
 - [`specs/brokers/`](specs/brokers/) — Specs de cada broker de mensajería.
+- [`specs/registros/`](specs/registros/) — Specs de registros de schemas y APIs.
+
+La carpeta [`doc/`](doc/) contiene documentación técnica de referencia sobre cada tecnología (conceptos, arquitectura, instalación).
 
 ---
 
@@ -98,6 +101,20 @@ Estos 3 brokers cubren los paradigmas principales:
 ### Dependencias de infraestructura
 
 - **Kafka** requiere ZooKeeper (o KRaft en modo standalone).
+
+---
+
+## 4.1. Registro de schemas
+
+| Componente | Detalle |
+|---|---|
+| Registro | Apicurio Registry |
+| Puerto | 8080 |
+| Imagen Docker | `apicurio/apicurio-registry:2.6.2.Final` |
+| Storage | PostgreSQL |
+| API compatible | Confluent Schema Registry v7 |
+
+Apicurio Registry centraliza la gestión de schemas de serialización (Avro, Protobuf, JSON Schema), proporcionando versionado, validación de compatibilidad y una API REST para que los servicios obtengan schemas en runtime.
 
 ---
 
@@ -175,11 +192,12 @@ La infraestructura se orquesta con Docker Compose. Se divide en dos perfiles:
 
 ```yaml
 services:
-  postgres:       # PostgreSQL 16
-  zookeeper:      # Dependencia de Kafka
-  kafka:          # Apache Kafka
-  rabbitmq:       # RabbitMQ + Management UI
-  nats:           # NATS
+  postgres:           # PostgreSQL 16
+  zookeeper:          # Dependencia de Kafka
+  kafka:              # Apache Kafka
+  rabbitmq:           # RabbitMQ + Management UI
+  nats:               # NATS
+  apicurio-registry:  # Apicurio Registry (schemas)
 ```
 
 ### Perfil `app` — Servicios de aplicación
@@ -228,33 +246,36 @@ docker compose down
 ## Diagrama de alto nivel
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                     serialplab                       │
-│                                                     │
-│  ┌──────────┐ ┌──────────┐ ┌────────┐ ┌────────┐  │
-│  │springboot│ │ quarkus  │ │   go   │ │  node  │  │
-│  │  :8081   │ │  :8082   │ │ :8083  │ │ :8084  │  │
-│  └────┬─────┘ └────┬─────┘ └───┬────┘ └───┬────┘  │
-│       │             │           │           │       │
-│       └─────────────┴─────┬─────┴───────────┘       │
-│                           │                         │
-│              ┌────────────┴────────────┐            │
-│              │   Serialización (x7)    │            │
-│              │ protobuf, avro, thrift, │            │
-│              │ msgpack, flatbuf, cbor, │            │
-│              │ json-schema             │            │
-│              └────────────┬────────────┘            │
-│                           │                         │
-│            ┌──────────────┼──────────────┐          │
-│            │              │              │          │
-│         ┌──┴──┐      ┌───┴───┐      ┌───┴──┐      │
-│         │Kafka│      │Rabbit │      │ NATS │      │
-│         │9092 │      │ 5672  │      │ 4222 │      │
-│         └─────┘      └───────┘      └──────┘      │
-│                           │                         │
-│                    ┌──────┴──────┐                  │
-│                    │ PostgreSQL  │                  │
-│                    │    5432     │                  │
-│                    └─────────────┘                  │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│                        serialplab                         │
+│                                                          │
+│  ┌──────────┐ ┌──────────┐ ┌────────┐ ┌────────┐       │
+│  │springboot│ │ quarkus  │ │   go   │ │  node  │       │
+│  │  :8081   │ │  :8082   │ │ :8083  │ │ :8084  │       │
+│  └────┬─────┘ └────┬─────┘ └───┬────┘ └───┬────┘       │
+│       │             │           │           │            │
+│       └─────────────┴─────┬─────┴───────────┘            │
+│                           │                              │
+│              ┌────────────┴────────────┐                 │
+│              │   Serialización (x7)    │                 │
+│              │ protobuf, avro, thrift, │                 │
+│              │ msgpack, flatbuf, cbor, │                 │
+│              │ json-schema             │                 │
+│              └──────┬─────────┬────────┘                 │
+│                     │         │                          │
+│            ┌────────┤    ┌────┴────────┐                 │
+│            │        │    │  Apicurio   │                 │
+│            │        │    │  Registry   │                 │
+│            │        │    │   :8080     │                 │
+│         ┌──┴──┐ ┌───┴───┐└────────────┘                 │
+│         │Kafka│ │Rabbit │      ┌──────┐                 │
+│         │9092 │ │ 5672  │      │ NATS │                 │
+│         └─────┘ └───────┘      │ 4222 │                 │
+│                                └──────┘                 │
+│                           │                              │
+│                    ┌──────┴──────┐                       │
+│                    │ PostgreSQL  │                       │
+│                    │    5432     │                       │
+│                    └─────────────┘                       │
+└──────────────────────────────────────────────────────────┘
 ```

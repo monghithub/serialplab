@@ -68,7 +68,9 @@ graph LR
         RMQ["RabbitMQ<br/>:5672 / :15672"]
         NATS["NATS<br/>:4222 / :8222"]
         PG[("PostgreSQL<br/>:5432")]
+        AR["Apicurio Registry<br/>:8080"]
         ZK --> KFK
+        PG --> AR
     end
 
     subgraph app["Perfil: app"]
@@ -78,7 +80,7 @@ graph LR
         ND["node :8084"]
     end
 
-    SB & QK & GO & ND --> KFK & RMQ & NATS & PG
+    SB & QK & GO & ND --> KFK & RMQ & NATS & PG & AR
 ```
 
 ## Servicios
@@ -158,10 +160,20 @@ Todos los servicios soportan los 3 brokers (Kafka, RabbitMQ, NATS) → **4 × 7 
 serialplab/
 ├── README.md                    ← este archivo
 ├── ARCHITECTURE.md              ← arquitectura detallada
-├── specs/
+├── doc/                         ← documentación técnica de referencia
+│   ├── lenguajes/               ← Java, Go, Node.js/TypeScript
+│   ├── frameworks/              ← Spring Boot, Quarkus, Express/Fastify
+│   ├── serializacion/           ← Protobuf, Avro, Thrift, MessagePack, ...
+│   ├── brokers/                 ← Kafka, RabbitMQ, NATS
+│   ├── bases-de-datos/          ← PostgreSQL
+│   ├── registros/               ← Apicurio Registry
+│   ├── infraestructura/         ← Docker, ZooKeeper
+│   └── especificaciones/        ← AsyncAPI
+├── specs/                       ← specs de uso en serialplab
 │   ├── services/                ← specs por servicio
 │   ├── protocols/               ← specs por protocolo
-│   └── brokers/                 ← specs por broker
+│   ├── brokers/                 ← specs por broker
+│   └── registros/               ← specs de registros de schemas
 ├── schemas/                     ← definiciones de schemas compartidos
 ├── asyncapi/                    ← contratos AsyncAPI 3.0
 ├── service-springboot/
@@ -190,4 +202,5 @@ docker compose down
 ## Documentación
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — Arquitectura completa del proyecto
-- [specs/](specs/) — Specs modulares de servicios, protocolos y brokers
+- [doc/](doc/) — Documentación técnica de referencia (qué es cada tecnología)
+- [specs/](specs/) — Specs modulares de uso en serialplab (cómo se usa cada componente)
