@@ -1,25 +1,3 @@
-# Tarea: Proyecto Maven Quarkus + application.properties + HealthResource
-
-## Issue: #4
-## Subtarea: 1 de 4
-
-## Objetivo
-
-Crear el esqueleto del proyecto Quarkus con Maven: pom.xml, application.properties, y health endpoint.
-
-## Ficheros a crear
-
-- `service-quarkus/pom.xml`
-- `service-quarkus/src/main/resources/application.properties`
-- `service-quarkus/src/main/java/com/serialplab/quarkus/HealthResource.java`
-
-## Contexto
-
-Base package: `com.serialplab.quarkus`. Puerto: 11002. PostgreSQL en localhost:11010, schema `quarkus`. Quarkus usa JAX-RS (no Spring MVC).
-
-### pom.xml
-
-```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -138,53 +116,3 @@ Base package: `com.serialplab.quarkus`. Puerto: 11002. PostgreSQL en localhost:1
         </plugins>
     </build>
 </project>
-```
-
-### application.properties
-
-```properties
-quarkus.http.port=11002
-
-# Datasource
-quarkus.datasource.db-kind=postgresql
-quarkus.datasource.username=serialplab
-quarkus.datasource.password=serialplab
-quarkus.datasource.jdbc.url=jdbc:postgresql://localhost:11010/serialplab?currentSchema=quarkus
-quarkus.hibernate-orm.database.default-schema=quarkus
-quarkus.hibernate-orm.database.generation=update
-
-# NATS
-nats.url=nats://localhost:11024
-```
-
-### HealthResource.java
-
-```java
-package com.serialplab.quarkus;
-
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import java.util.Map;
-
-@Path("/health")
-public class HealthResource {
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, String> health() {
-        return Map.of("status", "ok");
-    }
-}
-```
-
-## Validación
-
-```bash
-test -f service-quarkus/pom.xml && test -f service-quarkus/src/main/resources/application.properties && test -f service-quarkus/src/main/java/com/serialplab/quarkus/HealthResource.java && echo "OK"
-```
-
-## Reglas obligatorias
-
-- **Sin sudo:** NO ejecutes comandos con `sudo`.
-- **Commit siempre:** Al terminar, haz `git add` + `git commit` + `git push`.
