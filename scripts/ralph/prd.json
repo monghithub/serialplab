@@ -13,7 +13,7 @@
       "id": 2,
       "title": "Entidades JPA + repositorio + SerializationService",
       "promptFile": "prompt-2.md",
-      "passes": false
+      "passes": true
     },
     {
       "id": 3,
