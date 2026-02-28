@@ -13,7 +13,7 @@
       "id": 2,
       "title": "Serialización real en service-quarkus",
       "promptFile": "prompt-2.md",
-      "passes": false
+      "passes": true
     },
     {
       "id": 3,
