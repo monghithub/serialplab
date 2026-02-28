@@ -7,7 +7,7 @@
       "id": 1,
       "title": "Serialización real en service-springboot",
       "promptFile": "prompt-1.md",
-      "passes": false
+      "passes": true
     },
     {
       "id": 2,
