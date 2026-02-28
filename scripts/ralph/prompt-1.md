@@ -13,6 +13,8 @@ Crear `docker-compose.yml` en la raíz del proyecto con el perfil `infra` que le
 
 ## Contexto
 
+**CRÍTICO: NO incluir `version:` en el docker-compose.yml.** Usamos Docker Compose V2 (Compose Spec). El fichero debe empezar directamente con `services:`. Si pones `version: '3.x'` los profiles NO funcionarán y la validación fallará.
+
 Configuración exacta de cada servicio según las specs:
 
 ### PostgreSQL 16
@@ -127,12 +129,12 @@ volumes:
 - [ ] PostgreSQL tiene healthcheck
 - [ ] Kafka depende de ZooKeeper
 - [ ] Apicurio depende de PostgreSQL con condition: service_healthy
-- [ ] `docker compose config --profiles infra` valida sin errores
+- [ ] `docker compose --profile infra config` valida sin errores
 
 ## Validación
 
 ```bash
-docker compose config --profiles infra
+docker compose --profile infra config
 ```
 
 ## Reglas obligatorias
