@@ -1,0 +1,10 @@
+namespace serialplab.flatbuf;
+
+table User {
+  id:string;
+  name:string;
+  email:string;
+  timestamp:long;
+}
+
+root_type User;
