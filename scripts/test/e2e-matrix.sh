@@ -80,7 +80,7 @@ cat > "$SUMMARY_FILE" <<MDEOF
 | Total | ${TOTAL} |
 | Pass | ${PASS} |
 | Fail | ${FAIL} |
-| Rate | $(( PASS * 100 / (TOTAL > 0 ? TOTAL : 1) ))% |
+| Rate | $(( TOTAL > 0 ? PASS * 100 / TOTAL : 0 ))% |
 
 ## Matrix (Source → Target × Protocol × Broker)
 

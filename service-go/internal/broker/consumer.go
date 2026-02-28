@@ -20,25 +20,29 @@ func StartConsumers(serviceName string, handler MessageHandler) {
 }
 
 func consumeKafka(serviceName string, handler MessageHandler) {
-	topic := fmt.Sprintf("serialplab.%s.*", serviceName)
-	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:   []string{"localhost:11021"},
-		Topic:     topic,
-		GroupID:   serviceName + "-group",
-		Partition: 0,
-		MinBytes:  1,
-		MaxBytes:  10e6,
-	})
-	defer r.Close()
-	log.Printf("[Kafka] Consuming topic pattern: %s", topic)
-	for {
-		msg, err := r.ReadMessage(context.Background())
-		if err != nil {
-			log.Printf("[Kafka] Read error: %v", err)
-			return
-		}
-		protocol := extractProtocol(msg.Topic)
-		handler("kafka", protocol, msg.Value)
+	protocols := []string{"protobuf", "avro", "thrift", "messagepack", "flatbuffers", "cbor", "json-schema"}
+	for _, protocol := range protocols {
+		proto := protocol
+		topic := fmt.Sprintf("serialplab.%s.%s", serviceName, proto)
+		go func() {
+			r := kafka.NewReader(kafka.ReaderConfig{
+				Brokers:  []string{"localhost:11021"},
+				Topic:    topic,
+				GroupID:  serviceName + "-group",
+				MinBytes: 1,
+				MaxBytes: 10e6,
+			})
+			defer r.Close()
+			log.Printf("[Kafka] Consuming topic: %s", topic)
+			for {
+				msg, err := r.ReadMessage(context.Background())
+				if err != nil {
+					log.Printf("[Kafka] Read error on %s: %v", topic, err)
+					return
+				}
+				handler("kafka", proto, msg.Value)
+			}
+		}()
 	}
 }
 

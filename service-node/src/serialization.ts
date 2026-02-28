@@ -2,6 +2,7 @@ import { encode as msgpackEncode, decode as msgpackDecode } from '@msgpack/msgpa
 import { encode as cborEncode, decode as cborDecode } from 'cbor-x';
 import * as protobuf from 'protobufjs';
 import * as avro from 'avsc';
+import * as flatbuffers from 'flatbuffers';
 
 export interface User {
   id: string;
@@ -191,21 +192,57 @@ function readVarint(buf: Buffer, offset: number): [number, number] {
   return [result, i - offset];
 }
 
-// --- FlatBuffers (manual) ---
+// --- FlatBuffers (manual, compatible with Go builder format) ---
 function serializeFlatBuffers(user: User): Buffer {
-  // Simple implementation using manual buffer construction
-  const idBuf = Buffer.from(user.id, 'utf-8');
-  const nameBuf = Buffer.from(user.name, 'utf-8');
-  const emailBuf = Buffer.from(user.email, 'utf-8');
-
-  // Use JSON as a pragmatic FlatBuffers placeholder until flatc generates proper accessors
-  // Real FlatBuffers requires generated code for proper zero-copy access
-  const payload = JSON.stringify({ ...user, _fmt: 'flatbuffers' });
-  return Buffer.from(payload);
+  const builder = new flatbuffers.Builder(256);
+  const idOff = builder.createString(user.id);
+  const nameOff = builder.createString(user.name);
+  const emailOff = builder.createString(user.email);
+  builder.startObject(4);
+  builder.addFieldOffset(0, idOff, 0);
+  builder.addFieldOffset(1, nameOff, 0);
+  builder.addFieldOffset(2, emailOff, 0);
+  builder.addFieldInt64(3, BigInt(user.timestamp), BigInt(0));
+  const root = builder.endObject();
+  builder.finish(root);
+  return Buffer.from(builder.asUint8Array());
 }
 
 function deserializeFlatBuffers(data: Buffer): User {
-  const obj = JSON.parse(data.toString());
-  delete obj._fmt;
-  return obj as User;
+  const buf = new flatbuffers.ByteBuffer(new Uint8Array(data));
+  const rootOffset = buf.readInt32(0);
+  const tablePos = rootOffset;
+  const vtableOffset = tablePos - buf.readInt32(tablePos);
+  const vtableSize = buf.readInt16(vtableOffset);
+
+  let id = '';
+  let name = '';
+  let email = '';
+  let timestamp = 0;
+
+  if (vtableSize > 4) {
+    const off = buf.readInt16(vtableOffset + 4);
+    if (off !== 0) id = readFbString(buf, tablePos + off);
+  }
+  if (vtableSize > 6) {
+    const off = buf.readInt16(vtableOffset + 6);
+    if (off !== 0) name = readFbString(buf, tablePos + off);
+  }
+  if (vtableSize > 8) {
+    const off = buf.readInt16(vtableOffset + 8);
+    if (off !== 0) email = readFbString(buf, tablePos + off);
+  }
+  if (vtableSize > 10) {
+    const off = buf.readInt16(vtableOffset + 10);
+    if (off !== 0) timestamp = Number(buf.readInt64(tablePos + off));
+  }
+
+  return { id, name, email, timestamp };
+}
+
+function readFbString(buf: flatbuffers.ByteBuffer, offset: number): string {
+  const strOffset = offset + buf.readInt32(offset);
+  const len = buf.readInt32(strOffset);
+  const bytes = buf.bytes().subarray(strOffset + 4, strOffset + 4 + len);
+  return Buffer.from(bytes).toString('utf-8');
 }

@@ -33,6 +33,7 @@ public class BrokerConsumer {
     void onStart(@Observes StartupEvent ev) {
         startNatsConsumer();
         startKafkaConsumer();
+        startRabbitConsumer();
     }
 
     private void startNatsConsumer() {
@@ -76,6 +77,37 @@ public class BrokerConsumer {
                         }
                     });
                 }
+            }
+        });
+    }
+
+    private void startRabbitConsumer() {
+        Thread.ofVirtual().start(() -> {
+            try {
+                var factory = new com.rabbitmq.client.ConnectionFactory();
+                factory.setHost("localhost");
+                factory.setPort(11022);
+                factory.setUsername("guest");
+                factory.setPassword("guest");
+                var conn = factory.newConnection();
+                var channel = conn.createChannel();
+                String queueName = "serialplab.service-quarkus.queue";
+                channel.queueDeclare(queueName, true, false, false, null);
+                String bindKey = "serialplab.service-quarkus.*";
+                channel.queueBind(queueName, "amq.topic", bindKey);
+                log.infof("[RabbitMQ] Consuming queue: %s", queueName);
+                channel.basicConsume(queueName, true, (consumerTag, delivery) -> {
+                    String routingKey = delivery.getEnvelope().getRoutingKey();
+                    String protocol = extractProtocol(routingKey);
+                    try {
+                        var user = serializationService.deserialize(protocol, delivery.getBody());
+                        log.infof("[RabbitMQ] Received on %s: %s", routingKey, user);
+                    } catch (Exception e) {
+                        log.errorf("[RabbitMQ] Error on %s: %s", routingKey, e.getMessage());
+                    }
+                }, consumerTag -> {});
+            } catch (Exception e) {
+                log.warnf("[RabbitMQ] Consumer failed: %s", e.getMessage());
             }
         });
     }

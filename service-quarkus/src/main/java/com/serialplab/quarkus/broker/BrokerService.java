@@ -43,7 +43,7 @@ public class BrokerService {
         factory.setUsername("guest");
         factory.setPassword("guest");
         try (var conn = factory.newConnection(); var channel = conn.createChannel()) {
-            channel.basicPublish("", routingKey, null, data);
+            channel.basicPublish("amq.topic", routingKey, null, data);
         }
     }
 }
