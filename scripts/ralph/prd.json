@@ -7,7 +7,7 @@
       "id": 1,
       "title": "Consume en service-springboot + service-quarkus",
       "promptFile": "prompt-1.md",
-      "passes": false
+      "passes": true
     },
     {
       "id": 2,
