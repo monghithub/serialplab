@@ -10,6 +10,7 @@ services:
       - "11010:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./apicurio/init-registry-db.sql:/docker-entrypoint-initdb.d/init-registry-db.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U serialplab"]
       interval: 5s
@@ -72,11 +73,18 @@ services:
     environment:
       REGISTRY_STORAGE_KIND: sql
       REGISTRY_STORAGE_SQL_KIND: postgresql
-      REGISTRY_DATASOURCE_URL: jdbc:postgresql://postgres:5432/serialplab
-      REGISTRY_DATASOURCE_USERNAME: serialplab
-      REGISTRY_DATASOURCE_PASSWORD: serialplab
+      REGISTRY_DATASOURCE_URL: jdbc:postgresql://postgres:5432/registry
+      REGISTRY_DATASOURCE_USERNAME: registry
+      REGISTRY_DATASOURCE_PASSWORD: registry
+      QUARKUS_HTTP_PORT: 11011
     ports:
-      - "11011:8080"
+      - "11011:11011"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11011/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   frontend-angular:
     build: ./frontend-angular
