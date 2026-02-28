@@ -1,0 +1,30 @@
+server:
+  port: 11001
+
+spring:
+  application:
+    name: service-springboot
+  datasource:
+    url: jdbc:postgresql://localhost:11010/serialplab?currentSchema=springboot
+    username: serialplab
+    password: serialplab
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_schema: springboot
+    open-in-view: false
+  kafka:
+    bootstrap-servers: localhost:11021
+    consumer:
+      group-id: springboot-group
+      auto-offset-reset: earliest
+  rabbitmq:
+    host: localhost
+    port: 11022
+    username: guest
+    password: guest
+
+nats:
+  url: nats://localhost:11024

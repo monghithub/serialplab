@@ -7,19 +7,19 @@
       "id": 1,
       "title": "Proyecto Maven + application.yml + HealthController",
       "promptFile": "prompt-1.md",
-      "passes": true
+      "passes": false
     },
     {
       "id": 2,
       "title": "Entidades JPA + repositorio + SerializationService",
       "promptFile": "prompt-2.md",
-      "passes": true
+      "passes": false
     },
     {
       "id": 3,
       "title": "Configuración brokers Kafka, RabbitMQ, NATS",
       "promptFile": "prompt-3.md",
-      "passes": true
+      "passes": false
     },
     {
       "id": 4,
