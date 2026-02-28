@@ -7,7 +7,7 @@
       "id": 1,
       "title": "Proyecto Angular: package.json, angular.json, tsconfig, main.ts, app component",
       "promptFile": "prompt-1.md",
-      "passes": false
+      "passes": true
     },
     {
       "id": 2,
