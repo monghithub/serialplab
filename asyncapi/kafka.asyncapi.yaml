@@ -1,23 +1,3 @@
-# Tarea: Contrato AsyncAPI 3.0 para Kafka
-
-## Issue: #8
-## Subtarea: 1 de 2
-
-## Objetivo
-
-Crear el contrato AsyncAPI 3.0 para Apache Kafka.
-
-## Ficheros a crear
-
-- `asyncapi/kafka.asyncapi.yaml`
-
-## Contexto
-
-AsyncAPI 3.0 usa `channels`, `operations`, `messages` y `components`. El topic sigue el patrón `serialplab.{target}.{protocol}`.
-
-### kafka.asyncapi.yaml
-
-```yaml
 asyncapi: 3.0.0
 info:
   title: serialplab - Kafka
@@ -99,15 +79,3 @@ components:
           type: integer
           format: int64
           description: Epoch milliseconds
-```
-
-## Validación
-
-```bash
-test -f asyncapi/kafka.asyncapi.yaml && echo "OK"
-```
-
-## Reglas obligatorias
-
-- **Sin sudo:** NO ejecutes comandos con `sudo`.
-- **Commit siempre:** Al terminar, haz `git add` + `git commit` + `git push`.
