@@ -1,3 +1,29 @@
+# Tarea: Serialización real en service-go
+
+## Issue: #21
+## Subtarea: 3 de 4
+
+## Objetivo
+
+Reemplazar los placeholders de serialización en service-go con implementaciones reales.
+
+## Ficheros a modificar
+
+- `service-go/internal/serialization/serialization.go`
+
+## Contexto
+
+Model User: `ID string`, `Name string`, `Email string`, `Timestamp int64`.
+
+Usa las librerías de go.mod: protobuf (google.golang.org/protobuf), goavro (github.com/linkedin/goavro/v2), thrift (github.com/apache/thrift), flatbuffers (github.com/google/flatbuffers).
+
+Para Protobuf y Thrift usa encoding manual del wire format (sin código generado).
+Para Avro usa goavro con codec de schema.
+Para FlatBuffers usa flatbuffers.Builder.
+
+### Contenido COMPLETO de serialization.go
+
+```go
 package serialization
 
 import (
@@ -316,3 +342,15 @@ func readFbString(buf []byte, offset int) string {
 
 // suppress unused import
 var _ = math.MaxFloat64
+```
+
+## Validación
+
+```bash
+grep -q "serializeProtobuf" service-go/internal/serialization/serialization.go && grep -q "serializeAvro" service-go/internal/serialization/serialization.go && grep -q "goavro" service-go/internal/serialization/serialization.go && echo "OK"
+```
+
+## Reglas obligatorias
+
+- **Sin sudo:** NO ejecutes comandos con `sudo`.
+- **Commit siempre:** Al terminar, haz `git add` + `git commit` + `git push`.

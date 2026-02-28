@@ -1,3 +1,30 @@
+# Tarea: Serialización real en service-node
+
+## Issue: #21
+## Subtarea: 4 de 4
+
+## Objetivo
+
+Reemplazar los placeholders de serialización en service-node con implementaciones reales usando las librerías npm.
+
+## Ficheros a modificar
+
+- `service-node/src/serialization.ts`
+
+## Contexto
+
+User: `{ id: string, name: string, email: string, timestamp: number }`.
+
+Librerías: protobufjs, avsc, thrift (manual compact protocol), flatbuffers.
+
+Para Protobuf usa protobufjs con schema dinámico (Type.fromJSON).
+Para Avro usa avsc con Type.forSchema.
+Para Thrift usa encoding manual del compact protocol.
+Para FlatBuffers usa flatbuffers Builder.
+
+### Contenido COMPLETO de serialization.ts
+
+```typescript
 import { encode as msgpackEncode, decode as msgpackDecode } from '@msgpack/msgpack';
 import { encode as cborEncode, decode as cborDecode } from 'cbor-x';
 import * as protobuf from 'protobufjs';
@@ -209,3 +236,15 @@ function deserializeFlatBuffers(data: Buffer): User {
   delete obj._fmt;
   return obj as User;
 }
+```
+
+## Validación
+
+```bash
+grep -q "protobufjs\|protobuf" service-node/src/serialization.ts && grep -q "avsc\|avro" service-node/src/serialization.ts && grep -q "serializeThrift" service-node/src/serialization.ts && echo "OK"
+```
+
+## Reglas obligatorias
+
+- **Sin sudo:** NO ejecutes comandos con `sudo`.
+- **Commit siempre:** Al terminar, haz `git add` + `git commit` + `git push`.
