@@ -7,7 +7,7 @@
       "id": 1,
       "title": "Contrato AsyncAPI 3.0 para Kafka",
       "promptFile": "prompt-1.md",
-      "passes": false
+      "passes": true
     },
     {
       "id": 2,
