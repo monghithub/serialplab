@@ -1,3 +1,12 @@
-FROM python:3-alpine
+FROM golang:1.22-alpine AS build
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 go build -o service-go .
+
+FROM alpine:3.19
+WORKDIR /app
+COPY --from=build /app/service-go .
 EXPOSE 11003
-CMD ["python", "-c", "from http.server import HTTPServer, BaseHTTPRequestHandler; import json\nclass H(BaseHTTPRequestHandler):\n def do_GET(self):\n  self.send_response(200)\n  self.send_header('Content-Type','application/json')\n  self.end_headers()\n  self.wfile.write(json.dumps({'status':'ok'}).encode())\nHTTPServer(('',11003),H).serve_forever()"]
+ENTRYPOINT ["./service-go"]

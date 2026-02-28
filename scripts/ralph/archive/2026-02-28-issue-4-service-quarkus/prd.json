@@ -7,13 +7,13 @@
       "id": 1,
       "title": "Go module + main.go con health endpoint y router",
       "promptFile": "prompt-1.md",
-      "passes": true
+      "passes": false
     },
     {
       "id": 2,
       "title": "Modelo, DB, serialización y brokers",
       "promptFile": "prompt-2.md",
-      "passes": true
+      "passes": false
     },
     {
       "id": 3,
