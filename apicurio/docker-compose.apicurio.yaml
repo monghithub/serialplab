@@ -1,0 +1,23 @@
+services:
+  apicurio-registry:
+    image: apicurio/apicurio-registry:2.6.2.Final
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      REGISTRY_STORAGE_KIND: sql
+      REGISTRY_STORAGE_SQL_KIND: postgresql
+      REGISTRY_DATASOURCE_URL: jdbc:postgresql://postgres:5432/registry
+      REGISTRY_DATASOURCE_USERNAME: registry
+      REGISTRY_DATASOURCE_PASSWORD: registry
+      QUARKUS_HTTP_PORT: 11011
+    ports:
+      - "11011:11011"
+    profiles:
+      - infra
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11011/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s

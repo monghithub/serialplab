@@ -1,113 +1,68 @@
-# Tarea: Contrato AsyncAPI 3.0 para Kafka
+# Tarea: Docker Compose overlay para Apicurio Registry
 
-## Issue: #8
+## Issue: #9
 ## Subtarea: 1 de 2
 
 ## Objetivo
 
-Crear el contrato AsyncAPI 3.0 para Apache Kafka.
+Crear un fichero Docker Compose overlay que añade Apicurio Registry al perfil `infra`, y un script SQL para inicializar la base de datos del registry.
 
 ## Ficheros a crear
 
-- `asyncapi/kafka.asyncapi.yaml`
+- `apicurio/docker-compose.apicurio.yaml`
+- `apicurio/init-registry-db.sql`
 
 ## Contexto
 
-AsyncAPI 3.0 usa `channels`, `operations`, `messages` y `components`. El topic sigue el patrón `serialplab.{target}.{protocol}`.
+Apicurio Registry usa PostgreSQL como storage backend. La instancia PostgreSQL del proyecto corre en el puerto 11010 (host) / 5432 (contenedor). El registry expone su API en el puerto 11011.
 
-### kafka.asyncapi.yaml
+### apicurio/docker-compose.apicurio.yaml
 
 ```yaml
-asyncapi: 3.0.0
-info:
-  title: serialplab - Kafka
-  version: 0.0.1
-  description: Contratos de mensajería Kafka para serialplab
+services:
+  apicurio-registry:
+    image: apicurio/apicurio-registry:2.6.2.Final
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      REGISTRY_STORAGE_KIND: sql
+      REGISTRY_STORAGE_SQL_KIND: postgresql
+      REGISTRY_DATASOURCE_URL: jdbc:postgresql://postgres:5432/registry
+      REGISTRY_DATASOURCE_USERNAME: registry
+      REGISTRY_DATASOURCE_PASSWORD: registry
+      QUARKUS_HTTP_PORT: 11011
+    ports:
+      - "11011:11011"
+    profiles:
+      - infra
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11011/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+```
 
-servers:
-  kafka:
-    host: localhost:11021
-    protocol: kafka
-    description: Apache Kafka broker
+### apicurio/init-registry-db.sql
 
-channels:
-  serialplabMessages:
-    address: "serialplab.{target}.{protocol}"
-    messages:
-      userMessage:
-        $ref: "#/components/messages/UserMessage"
-    parameters:
-      target:
-        description: Servicio destino (service-springboot, service-quarkus, service-go, service-node)
-      protocol:
-        description: Protocolo de serialización (protobuf, avro, thrift, messagepack, flatbuffers, cbor, json-schema)
-    bindings:
-      kafka:
-        partitions: 1
-        replicas: 1
+```sql
+-- Inicializa la base de datos para Apicurio Registry
+-- Se ejecuta como parte del init de PostgreSQL
 
-operations:
-  publishMessage:
-    action: send
-    channel:
-      $ref: "#/channels/serialplabMessages"
-    summary: Publica un mensaje User serializado al topic Kafka
-    messages:
-      - $ref: "#/channels/serialplabMessages/messages/userMessage"
-
-  consumeMessage:
-    action: receive
-    channel:
-      $ref: "#/channels/serialplabMessages"
-    summary: Consume un mensaje User del topic Kafka
-    bindings:
-      kafka:
-        groupId: "{service}-group"
-    messages:
-      - $ref: "#/channels/serialplabMessages/messages/userMessage"
-
-components:
-  messages:
-    UserMessage:
-      name: UserMessage
-      title: User message
-      contentType: application/octet-stream
-      payload:
-        $ref: "#/components/schemas/User"
-
-  schemas:
-    User:
-      type: object
-      required:
-        - id
-        - name
-        - email
-        - timestamp
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: UUID del usuario
-        name:
-          type: string
-          description: Nombre del usuario
-        email:
-          type: string
-          format: email
-          description: Email del usuario
-        timestamp:
-          type: integer
-          format: int64
-          description: Epoch milliseconds
+CREATE USER registry WITH PASSWORD 'registry';
+CREATE DATABASE registry OWNER registry;
+GRANT ALL PRIVILEGES ON DATABASE registry TO registry;
 ```
 
 ## Validación
 
 ```bash
-test -f asyncapi/kafka.asyncapi.yaml && echo "OK"
+test -f apicurio/docker-compose.apicurio.yaml && test -f apicurio/init-registry-db.sql && echo "OK"
 ```
 
 ## Reglas obligatorias
 
 - **Sin sudo:** NO ejecutes comandos con `sudo`.
 - **Commit siempre:** Al terminar, haz `git add` + `git commit` + `git push`.
+- **CRÍTICO:** NO incluir `version:` en el docker-compose yaml.
