@@ -7,7 +7,7 @@
       "id": 1,
       "title": "Docker Compose overlay para Apicurio Registry + init DB",
       "promptFile": "prompt-1.md",
-      "passes": false
+      "passes": true
     },
     {
       "id": 2,

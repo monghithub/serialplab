@@ -1,1 +1,2 @@
 # Ralph Progress Log
+[1] Subtask 1 (prompt-1.md): 30s [slots=1]
