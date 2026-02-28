@@ -1,1 +1,2 @@
 iteration,subtask_id,prompt_file,start_time,end_time,duration_secs,parallel_slots,status
+1,1,prompt-1.md,2026-02-28T07:00:31+01:00,2026-02-28T07:06:10+01:00,339,1,done

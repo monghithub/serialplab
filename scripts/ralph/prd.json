@@ -7,7 +7,7 @@
       "id": 1,
       "title": "Script de codegen + Maven plugins para Java services",
       "promptFile": "prompt-1.md",
-      "passes": false
+      "passes": true
     },
     {
       "id": 2,
