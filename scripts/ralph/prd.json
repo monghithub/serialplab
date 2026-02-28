@@ -7,7 +7,7 @@
       "id": 1,
       "title": "Go module + main.go con health endpoint y router",
       "promptFile": "prompt-1.md",
-      "passes": false
+      "passes": true
     },
     {
       "id": 2,
