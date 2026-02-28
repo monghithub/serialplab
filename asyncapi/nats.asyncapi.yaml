@@ -1,0 +1,70 @@
+asyncapi: 3.0.0
+info:
+  title: serialplab - NATS
+  version: 0.0.1
+  description: Contratos de mensajería NATS para serialplab
+
+servers:
+  nats:
+    host: localhost:11024
+    protocol: nats
+    description: NATS server con JetStream
+
+channels:
+  serialplabMessages:
+    address: "serialplab.{target}.{protocol}"
+    messages:
+      userMessage:
+        $ref: "#/components/messages/UserMessage"
+    parameters:
+      target:
+        description: Servicio destino
+      protocol:
+        description: Protocolo de serialización
+
+operations:
+  publishMessage:
+    action: send
+    channel:
+      $ref: "#/channels/serialplabMessages"
+    summary: Publica un mensaje User al subject NATS
+    messages:
+      - $ref: "#/channels/serialplabMessages/messages/userMessage"
+
+  consumeMessage:
+    action: receive
+    channel:
+      $ref: "#/channels/serialplabMessages"
+    summary: Consume un mensaje User del subject NATS
+    messages:
+      - $ref: "#/channels/serialplabMessages/messages/userMessage"
+
+components:
+  messages:
+    UserMessage:
+      name: UserMessage
+      title: User message
+      contentType: application/octet-stream
+      payload:
+        $ref: "#/components/schemas/User"
+
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - timestamp
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        timestamp:
+          type: integer
+          format: int64

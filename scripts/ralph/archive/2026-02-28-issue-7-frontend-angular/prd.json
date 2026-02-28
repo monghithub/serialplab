@@ -7,13 +7,13 @@
       "id": 1,
       "title": "Contrato AsyncAPI 3.0 para Kafka",
       "promptFile": "prompt-1.md",
-      "passes": true
+      "passes": false
     },
     {
       "id": 2,
       "title": "Contratos AsyncAPI 3.0 para RabbitMQ y NATS",
       "promptFile": "prompt-2.md",
-      "passes": true
+      "passes": false
     }
   ]
 }

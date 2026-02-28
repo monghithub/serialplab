@@ -1,0 +1,79 @@
+asyncapi: 3.0.0
+info:
+  title: serialplab - RabbitMQ
+  version: 0.0.1
+  description: Contratos de mensajería RabbitMQ para serialplab
+
+servers:
+  rabbitmq:
+    host: localhost:11022
+    protocol: amqp
+    description: RabbitMQ broker
+
+channels:
+  serialplabMessages:
+    address: "serialplab.{target}.{protocol}"
+    messages:
+      userMessage:
+        $ref: "#/components/messages/UserMessage"
+    parameters:
+      target:
+        description: Servicio destino
+      protocol:
+        description: Protocolo de serialización
+    bindings:
+      amqp:
+        is: queue
+        queue:
+          durable: true
+          autoDelete: false
+
+operations:
+  publishMessage:
+    action: send
+    channel:
+      $ref: "#/channels/serialplabMessages"
+    summary: Publica un mensaje User a la queue RabbitMQ
+    messages:
+      - $ref: "#/channels/serialplabMessages/messages/userMessage"
+
+  consumeMessage:
+    action: receive
+    channel:
+      $ref: "#/channels/serialplabMessages"
+    summary: Consume un mensaje User de la queue RabbitMQ
+    bindings:
+      amqp:
+        ack: true
+    messages:
+      - $ref: "#/channels/serialplabMessages/messages/userMessage"
+
+components:
+  messages:
+    UserMessage:
+      name: UserMessage
+      title: User message
+      contentType: application/octet-stream
+      payload:
+        $ref: "#/components/schemas/User"
+
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - timestamp
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        timestamp:
+          type: integer
+          format: int64
