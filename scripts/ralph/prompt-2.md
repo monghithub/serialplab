@@ -1,185 +1,110 @@
-# Tarea: Contratos AsyncAPI 3.0 para RabbitMQ y NATS
+# Tarea: Scripts de registro de schemas y health check
 
-## Issue: #8
+## Issue: #9
 ## Subtarea: 2 de 2
 
 ## Objetivo
 
-Crear los contratos AsyncAPI 3.0 para RabbitMQ y NATS.
+Crear scripts bash para registrar los schemas (Avro, Protobuf, JSON Schema) en Apicurio Registry y para verificar el estado del registry.
 
 ## Ficheros a crear
 
-- `asyncapi/rabbitmq.asyncapi.yaml`
-- `asyncapi/nats.asyncapi.yaml`
+- `scripts/apicurio/register-schemas.sh`
+- `scripts/apicurio/wait-for-registry.sh`
 
 ## Contexto
 
-### rabbitmq.asyncapi.yaml
+Apicurio Registry expone la API REST v3 en `http://localhost:11011`. Los schemas se registran como artifacts en el grupo `serialplab`.
 
-```yaml
-asyncapi: 3.0.0
-info:
-  title: serialplab - RabbitMQ
-  version: 0.0.1
-  description: Contratos de mensajería RabbitMQ para serialplab
+### scripts/apicurio/wait-for-registry.sh
 
-servers:
-  rabbitmq:
-    host: localhost:11022
-    protocol: amqp
-    description: RabbitMQ broker
+```bash
+#!/usr/bin/env bash
+# Espera a que Apicurio Registry esté listo
+set -euo pipefail
 
-channels:
-  serialplabMessages:
-    address: "serialplab.{target}.{protocol}"
-    messages:
-      userMessage:
-        $ref: "#/components/messages/UserMessage"
-    parameters:
-      target:
-        description: Servicio destino
-      protocol:
-        description: Protocolo de serialización
-    bindings:
-      amqp:
-        is: queue
-        queue:
-          durable: true
-          autoDelete: false
+REGISTRY_URL="${REGISTRY_URL:-http://localhost:11011}"
+MAX_RETRIES="${MAX_RETRIES:-30}"
+RETRY_INTERVAL="${RETRY_INTERVAL:-5}"
 
-operations:
-  publishMessage:
-    action: send
-    channel:
-      $ref: "#/channels/serialplabMessages"
-    summary: Publica un mensaje User a la queue RabbitMQ
-    messages:
-      - $ref: "#/channels/serialplabMessages/messages/userMessage"
+echo "Waiting for Apicurio Registry at ${REGISTRY_URL}..."
 
-  consumeMessage:
-    action: receive
-    channel:
-      $ref: "#/channels/serialplabMessages"
-    summary: Consume un mensaje User de la queue RabbitMQ
-    bindings:
-      amqp:
-        ack: true
-    messages:
-      - $ref: "#/channels/serialplabMessages/messages/userMessage"
+for i in $(seq 1 "$MAX_RETRIES"); do
+  if curl -sf "${REGISTRY_URL}/health/ready" > /dev/null 2>&1; then
+    echo "Apicurio Registry is ready!"
+    exit 0
+  fi
+  echo "  Attempt $i/$MAX_RETRIES - not ready yet, retrying in ${RETRY_INTERVAL}s..."
+  sleep "$RETRY_INTERVAL"
+done
 
-components:
-  messages:
-    UserMessage:
-      name: UserMessage
-      title: User message
-      contentType: application/octet-stream
-      payload:
-        $ref: "#/components/schemas/User"
-
-  schemas:
-    User:
-      type: object
-      required:
-        - id
-        - name
-        - email
-        - timestamp
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        email:
-          type: string
-          format: email
-        timestamp:
-          type: integer
-          format: int64
+echo "ERROR: Apicurio Registry not ready after $MAX_RETRIES attempts"
+exit 1
 ```
 
-### nats.asyncapi.yaml
+### scripts/apicurio/register-schemas.sh
 
-```yaml
-asyncapi: 3.0.0
-info:
-  title: serialplab - NATS
-  version: 0.0.1
-  description: Contratos de mensajería NATS para serialplab
+```bash
+#!/usr/bin/env bash
+# Registra schemas en Apicurio Registry via API REST v3
+set -euo pipefail
 
-servers:
-  nats:
-    host: localhost:11024
-    protocol: nats
-    description: NATS server con JetStream
+REGISTRY_URL="${REGISTRY_URL:-http://localhost:11011}"
+GROUP="serialplab"
+API_BASE="${REGISTRY_URL}/apis/registry/v3/groups/${GROUP}/artifacts"
 
-channels:
-  serialplabMessages:
-    address: "serialplab.{target}.{protocol}"
-    messages:
-      userMessage:
-        $ref: "#/components/messages/UserMessage"
-    parameters:
-      target:
-        description: Servicio destino
-      protocol:
-        description: Protocolo de serialización
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-operations:
-  publishMessage:
-    action: send
-    channel:
-      $ref: "#/channels/serialplabMessages"
-    summary: Publica un mensaje User al subject NATS
-    messages:
-      - $ref: "#/channels/serialplabMessages/messages/userMessage"
+echo "=== Registering schemas in Apicurio Registry ==="
+echo "Registry: ${REGISTRY_URL}"
+echo "Group: ${GROUP}"
+echo ""
 
-  consumeMessage:
-    action: receive
-    channel:
-      $ref: "#/channels/serialplabMessages"
-    summary: Consume un mensaje User del subject NATS
-    messages:
-      - $ref: "#/channels/serialplabMessages/messages/userMessage"
+# Register Avro schema
+echo "1/3 Registering message-avro (AVRO)..."
+curl -sf -X POST "$API_BASE" \
+  -H "Content-Type: application/json" \
+  -H "X-Registry-ArtifactId: message-avro" \
+  -H "X-Registry-ArtifactType: AVRO" \
+  -d @"${PROJECT_ROOT}/schemas/avro/message.avsc" \
+  && echo "  OK" || echo "  WARN: may already exist"
 
-components:
-  messages:
-    UserMessage:
-      name: UserMessage
-      title: User message
-      contentType: application/octet-stream
-      payload:
-        $ref: "#/components/schemas/User"
+# Register Protobuf schema
+echo "2/3 Registering message-protobuf (PROTOBUF)..."
+curl -sf -X POST "$API_BASE" \
+  -H "Content-Type: application/x-protobuf" \
+  -H "X-Registry-ArtifactId: message-protobuf" \
+  -H "X-Registry-ArtifactType: PROTOBUF" \
+  --data-binary @"${PROJECT_ROOT}/schemas/protobuf/message.proto" \
+  && echo "  OK" || echo "  WARN: may already exist"
 
-  schemas:
-    User:
-      type: object
-      required:
-        - id
-        - name
-        - email
-        - timestamp
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        email:
-          type: string
-          format: email
-        timestamp:
-          type: integer
-          format: int64
+# Register JSON Schema
+echo "3/3 Registering message-json (JSON)..."
+curl -sf -X POST "$API_BASE" \
+  -H "Content-Type: application/json" \
+  -H "X-Registry-ArtifactId: message-json" \
+  -H "X-Registry-ArtifactType: JSON" \
+  -d @"${PROJECT_ROOT}/schemas/jsonschema/message.schema.json" \
+  && echo "  OK" || echo "  WARN: may already exist"
+
+echo ""
+echo "=== Schema registration complete ==="
+
+# Verify
+echo ""
+echo "Verifying registered artifacts..."
+curl -sf "${API_BASE}" | python3 -m json.tool 2>/dev/null || curl -sf "${API_BASE}"
 ```
 
 ## Validación
 
 ```bash
-test -f asyncapi/rabbitmq.asyncapi.yaml && test -f asyncapi/nats.asyncapi.yaml && echo "OK"
+test -f scripts/apicurio/register-schemas.sh && test -f scripts/apicurio/wait-for-registry.sh && test -x scripts/apicurio/register-schemas.sh && test -x scripts/apicurio/wait-for-registry.sh && echo "OK"
 ```
 
 ## Reglas obligatorias
 
 - **Sin sudo:** NO ejecutes comandos con `sudo`.
 - **Commit siempre:** Al terminar, haz `git add` + `git commit` + `git push`.
+- **Permisos:** Los scripts deben tener permisos de ejecución (`chmod +x`).
