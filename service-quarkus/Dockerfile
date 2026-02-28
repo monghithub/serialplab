@@ -1,3 +1,12 @@
-FROM python:3-alpine
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /app
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
+COPY src ./src
+RUN mvn clean package -DskipTests -B
+
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=build /app/target/quarkus-app /app
 EXPOSE 11002
-CMD ["python", "-c", "from http.server import HTTPServer, BaseHTTPRequestHandler; import json\nclass H(BaseHTTPRequestHandler):\n def do_GET(self):\n  self.send_response(200)\n  self.send_header('Content-Type','application/json')\n  self.end_headers()\n  self.wfile.write(json.dumps({'status':'ok'}).encode())\nHTTPServer(('',11002),H).serve_forever()"]
+ENTRYPOINT ["java", "-jar", "quarkus-run.jar"]
