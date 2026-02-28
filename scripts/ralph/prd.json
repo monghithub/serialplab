@@ -7,7 +7,7 @@
       "id": 1,
       "title": "Proyecto Maven Quarkus + application.properties + HealthResource",
       "promptFile": "prompt-1.md",
-      "passes": false
+      "passes": true
     },
     {
       "id": 2,
