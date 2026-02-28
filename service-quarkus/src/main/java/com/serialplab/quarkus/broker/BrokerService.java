@@ -26,7 +26,7 @@ public class BrokerService {
 
     private void publishKafka(String topic, byte[] data) {
         var props = new Properties();
-        props.put("bootstrap.servers", "localhost:11021");
+        props.put("bootstrap.servers", System.getenv().getOrDefault("KAFKA_BOOTSTRAP_SERVERS", "localhost:11021"));
         props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
         try (var producer = new KafkaProducer<String, byte[]>(props)) {
@@ -38,8 +38,8 @@ public class BrokerService {
 
     private void publishRabbitDirect(String routingKey, byte[] data) throws Exception {
         var factory = new com.rabbitmq.client.ConnectionFactory();
-        factory.setHost("localhost");
-        factory.setPort(11022);
+        factory.setHost(System.getenv().getOrDefault("RABBITMQ_HOST", "localhost"));
+        factory.setPort(Integer.parseInt(System.getenv().getOrDefault("RABBITMQ_PORT", "11022")));
         factory.setUsername("guest");
         factory.setPassword("guest");
         try (var conn = factory.newConnection(); var channel = conn.createChannel()) {

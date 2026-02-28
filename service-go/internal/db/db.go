@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 
 	_ "github.com/lib/pq"
 	"serialplab/service-go/internal/model"
@@ -11,9 +12,17 @@ import (
 
 var DB *sql.DB
 
+func envOr(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
+
 func Init() {
 	var err error
-	connStr := "host=localhost port=11010 user=serialplab password=serialplab dbname=serialplab sslmode=disable search_path=goservice"
+	connStr := fmt.Sprintf("host=%s port=%s user=serialplab password=serialplab dbname=serialplab sslmode=disable search_path=goservice",
+		envOr("DB_HOST", "localhost"), envOr("DB_PORT", "11010"))
 	DB, err = sql.Open("postgres", connStr)
 	if err != nil {
 		log.Printf("Warning: could not connect to DB: %v", err)

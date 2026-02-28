@@ -38,6 +38,12 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-jdbc-postgresql</artifactId>
         </dependency>
+        <!-- Kafka -->
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>3.7.0</version>
+        </dependency>
         <!-- RabbitMQ -->
         <dependency>
             <groupId>com.rabbitmq</groupId>
@@ -99,6 +105,13 @@
         </dependency>
     </dependencies>
     <build>
+        <extensions>
+            <extension>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.7.1</version>
+            </extension>
+        </extensions>
         <plugins>
             <plugin>
                 <groupId>io.quarkus.platform</groupId>
@@ -145,8 +158,6 @@
                 <version>0.6.1</version>
                 <configuration>
                     <protocArtifact>com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}</protocArtifact>
-                    <pluginId>grpc-java</pluginId>
-                    <pluginArtifact>io.grpc:protoc-gen-grpc-java:${protobuf.version}:exe:${os.detected.classifier}</pluginArtifact>
                     <outputDirectory>${project.build.directory}/generated-sources/protobuf/java</outputDirectory>
                     <clearOutputDirectory>false</clearOutputDirectory>
                     <protoSourceRoot>${project.basedir}/../schemas/protobuf</protoSourceRoot>
@@ -155,7 +166,6 @@
                     <execution>
                         <goals>
                             <goal>compile</goal>
-                            <goal>compile-custom</goal>
                         </goals>
                     </execution>
                 </executions>

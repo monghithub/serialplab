@@ -58,7 +58,7 @@ public class BrokerConsumer {
     private void startKafkaConsumer() {
         Thread.ofVirtual().start(() -> {
             Properties props = new Properties();
-            props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:11021");
+            props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, System.getenv().getOrDefault("KAFKA_BOOTSTRAP_SERVERS", "localhost:11021"));
             props.put(ConsumerConfig.GROUP_ID_CONFIG, "quarkus-group");
             props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
             props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class.getName());
@@ -85,8 +85,8 @@ public class BrokerConsumer {
         Thread.ofVirtual().start(() -> {
             try {
                 var factory = new com.rabbitmq.client.ConnectionFactory();
-                factory.setHost("localhost");
-                factory.setPort(11022);
+                factory.setHost(System.getenv().getOrDefault("RABBITMQ_HOST", "localhost"));
+                factory.setPort(Integer.parseInt(System.getenv().getOrDefault("RABBITMQ_PORT", "11022")));
                 factory.setUsername("guest");
                 factory.setPassword("guest");
                 var conn = factory.newConnection();

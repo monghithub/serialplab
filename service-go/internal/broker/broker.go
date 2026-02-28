@@ -3,11 +3,19 @@ package broker
 import (
 	"context"
 	"fmt"
+	"os"
 
 	amqp "github.com/rabbitmq/amqp091-go"
-	"github.com/segmentio/kafka-go"
 	"github.com/nats-io/nats.go"
+	"github.com/segmentio/kafka-go"
 )
+
+func envOrDefault(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
 
 func Publish(brokerName, target, protocol string, data []byte) error {
 	subject := fmt.Sprintf("serialplab.%s.%s", target, protocol)
@@ -25,7 +33,7 @@ func Publish(brokerName, target, protocol string, data []byte) error {
 
 func publishKafka(topic string, data []byte) error {
 	w := &kafka.Writer{
-		Addr:  kafka.TCP("localhost:11021"),
+		Addr:  kafka.TCP(envOrDefault("KAFKA_BROKERS", "localhost:11021")),
 		Topic: topic,
 	}
 	defer w.Close()
@@ -33,7 +41,7 @@ func publishKafka(topic string, data []byte) error {
 }
 
 func publishRabbit(routingKey string, data []byte) error {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:11022/")
+	conn, err := amqp.Dial(envOrDefault("RABBITMQ_URL", "amqp://guest:guest@localhost:11022/"))
 	if err != nil {
 		return err
 	}
@@ -43,11 +51,11 @@ func publishRabbit(routingKey string, data []byte) error {
 		return err
 	}
 	defer ch.Close()
-	return ch.Publish("", routingKey, false, false, amqp.Publishing{Body: data})
+	return ch.Publish("amq.topic", routingKey, false, false, amqp.Publishing{Body: data})
 }
 
 func publishNats(subject string, data []byte) error {
-	nc, err := nats.Connect("nats://localhost:11024")
+	nc, err := nats.Connect(envOrDefault("NATS_URL", "nats://localhost:11024"))
 	if err != nil {
 		return err
 	}

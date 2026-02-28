@@ -7,7 +7,9 @@ const router = Router();
 
 router.post('/publish/:target/:protocol/:broker', async (req: Request, res: Response) => {
   try {
-    const { target, protocol, broker } = req.params;
+    const target = req.params.target as string;
+    const protocol = req.params.protocol as string;
+    const broker = req.params.broker as string;
     const user = req.body;
     const data = serialize(protocol, user);
     await publish(broker, target, protocol, data);

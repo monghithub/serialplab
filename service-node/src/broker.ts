@@ -17,7 +17,7 @@ export async function publish(brokerName: string, target: string, protocol: stri
 }
 
 async function publishKafka(topic: string, data: Buffer): Promise<void> {
-  const kafka = new Kafka({ brokers: ['localhost:11021'] });
+  const kafka = new Kafka({ brokers: [process.env.KAFKA_BROKERS || 'localhost:11021'] });
   const producer = kafka.producer();
   await producer.connect();
   await producer.send({ topic, messages: [{ value: data }] });
@@ -25,15 +25,15 @@ async function publishKafka(topic: string, data: Buffer): Promise<void> {
 }
 
 async function publishRabbit(routingKey: string, data: Buffer): Promise<void> {
-  const conn = await amqplib.connect('amqp://guest:guest@localhost:11022');
+  const conn = await amqplib.connect(process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:11022');
   const ch = await conn.createChannel();
-  ch.sendToQueue(routingKey, data);
+  ch.publish('amq.topic', routingKey, data);
   await ch.close();
   await conn.close();
 }
 
 async function publishNats(subject: string, data: Buffer): Promise<void> {
-  const nc = await natsConnect({ servers: 'nats://localhost:11024' });
+  const nc = await natsConnect({ servers: process.env.NATS_URL || 'nats://localhost:11024' });
   nc.publish(subject, data);
   await nc.flush();
   await nc.close();

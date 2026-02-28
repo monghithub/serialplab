@@ -17,7 +17,7 @@ export async function startConsumers(serviceName: string, handler: MessageHandle
 }
 
 async function consumeKafka(serviceName: string, handler: MessageHandler): Promise<void> {
-  const kafka = new Kafka({ brokers: ['localhost:11021'] });
+  const kafka = new Kafka({ brokers: [process.env.KAFKA_BROKERS || 'localhost:11021'] });
   const consumer = kafka.consumer({ groupId: `${serviceName}-group` });
   await consumer.connect();
   await consumer.subscribe({ topics: [new RegExp(`serialplab\\.${serviceName}\\..*`)], fromBeginning: false });
@@ -33,7 +33,7 @@ async function consumeKafka(serviceName: string, handler: MessageHandler): Promi
 }
 
 async function consumeRabbit(serviceName: string, handler: MessageHandler): Promise<void> {
-  const conn = await amqplib.connect('amqp://guest:guest@localhost:11022');
+  const conn = await amqplib.connect(process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:11022');
   const ch = await conn.createChannel();
   const queueName = `serialplab.${serviceName}.queue`;
   await ch.assertQueue(queueName, { durable: true });
@@ -50,7 +50,7 @@ async function consumeRabbit(serviceName: string, handler: MessageHandler): Prom
 }
 
 async function consumeNats(serviceName: string, handler: MessageHandler): Promise<void> {
-  const nc = await natsConnect({ servers: 'nats://localhost:11024' });
+  const nc = await natsConnect({ servers: process.env.NATS_URL || 'nats://localhost:11024' });
   const subject = `serialplab.${serviceName}.>`;
   console.log(`[NATS] Subscribing to: ${subject}`);
   const sub = nc.subscribe(subject);

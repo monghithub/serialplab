@@ -26,7 +26,7 @@ func consumeKafka(serviceName string, handler MessageHandler) {
 		topic := fmt.Sprintf("serialplab.%s.%s", serviceName, proto)
 		go func() {
 			r := kafka.NewReader(kafka.ReaderConfig{
-				Brokers:  []string{"localhost:11021"},
+				Brokers:  []string{envOrDefault("KAFKA_BROKERS", "localhost:11021")},
 				Topic:    topic,
 				GroupID:  serviceName + "-group",
 				MinBytes: 1,
@@ -47,7 +47,7 @@ func consumeKafka(serviceName string, handler MessageHandler) {
 }
 
 func consumeRabbit(serviceName string, handler MessageHandler) {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:11022/")
+	conn, err := amqp.Dial(envOrDefault("RABBITMQ_URL", "amqp://guest:guest@localhost:11022/"))
 	if err != nil {
 		log.Printf("[RabbitMQ] Connection failed: %v", err)
 		return
@@ -81,7 +81,7 @@ func consumeRabbit(serviceName string, handler MessageHandler) {
 }
 
 func consumeNats(serviceName string, handler MessageHandler) {
-	nc, err := nats.Connect("nats://localhost:11024")
+	nc, err := nats.Connect(envOrDefault("NATS_URL", "nats://localhost:11024"))
 	if err != nil {
 		log.Printf("[NATS] Connection failed: %v", err)
 		return

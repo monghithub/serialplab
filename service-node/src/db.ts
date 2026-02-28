@@ -1,8 +1,8 @@
 import { Pool } from 'pg';
 
 const pool = new Pool({
-  host: 'localhost',
-  port: 11010,
+  host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT || '11010'),
   user: 'serialplab',
   password: 'serialplab',
   database: 'serialplab',

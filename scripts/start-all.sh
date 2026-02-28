@@ -79,7 +79,25 @@ wait_healthy() {
 wait_healthy postgres 30
 wait_healthy kafka 60
 wait_healthy rabbitmq 30
-wait_healthy nats 15
+
+# NATS (scratch image sin shell — check HTTP desde el host)
+wait_http_quiet() {
+  local name=$1
+  local url=$2
+  local max_retries=${3:-15}
+  local i=0
+  while [ $i -lt $max_retries ]; do
+    if curl -sf "$url" > /dev/null 2>&1; then
+      ok "$name healthy"
+      return 0
+    fi
+    i=$((i + 1))
+    sleep 2
+  done
+  fail "$name no respondió tras $((max_retries * 2))s"
+  return 1
+}
+wait_http_quiet nats "http://localhost:11025/healthz" 15
 
 # --- 2. Apicurio Registry ---
 log "═══════════════════════════════════════"
@@ -100,9 +118,9 @@ log "  Paso 3/4: Levantando servicios app"
 log "═══════════════════════════════════════"
 
 if [ "$SKIP_BUILD" = true ]; then
-  docker compose --profile app up -d
+  docker compose --profile infra --profile app up -d
 else
-  docker compose --profile app up -d --build
+  docker compose --profile infra --profile app up -d --build
 fi
 ok "Contenedores app arrancados"
 
