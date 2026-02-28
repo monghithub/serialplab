@@ -192,6 +192,10 @@ serialplab/
 │   └── registros/               ← specs de registros de schemas
 ├── schemas/                     ← definiciones de schemas compartidos
 ├── asyncapi/                    ← contratos AsyncAPI 3.0
+├── apicurio/                    ← inicialización de Apicurio Registry
+├── scripts/test/                ← tests E2E y matriz de resultados
+├── scripts/codegen/             ← generación de código desde schemas
+├── scripts/apicurio/            ← gestión del registro de schemas
 ├── frontend-angular/
 ├── service-springboot/
 ├── service-quarkus/
@@ -199,6 +203,10 @@ serialplab/
 ├── service-node/
 └── docker-compose.yml
 ```
+
+## Estado de implementación
+
+Las **84 combinaciones** (4 servicios × 7 protocolos × 3 brokers) están completamente implementadas y verificadas. Cada servicio puede publicar y consumir mensajes en cualquier combinación de protocolo y broker.
 
 ## Quick start
 
@@ -208,6 +216,15 @@ docker compose --profile infra up -d
 
 # Levantar todos los servicios
 docker compose --profile infra --profile app up -d
+
+# Generar código desde schemas (protobuf, avro, thrift, flatbuffers)
+./scripts/codegen/generate-all.sh
+
+# Registrar schemas en Apicurio Registry
+./scripts/apicurio/register-schemas.sh
+
+# Ejecutar tests E2E (84 combinaciones)
+./scripts/test/e2e-matrix.sh
 
 # Ver logs de un servicio
 docker compose logs -f service-go

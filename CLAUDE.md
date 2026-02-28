@@ -4,7 +4,7 @@
 
 **serialplab** (Serialization Lab) es una PoC que evalúa la intercomunicación entre servicios heterogéneos usando 7 protocolos de serialización × 3 brokers de mensajería × 4 stacks tecnológicos (84 combinaciones).
 
-**Estado actual:** Solo documentación (specs, doc, ARCHITECTURE.md). No hay código fuente, docker-compose, ni schemas aún.
+**Estado actual:** Implementación completa. Los 4 servicios, schemas compartidos, docker-compose, scripts de codegen/test E2E, migraciones SQL, consumers y serialización real están implementados. Las 84 combinaciones están operativas.
 
 ## Estructura de carpetas
 
@@ -25,14 +25,24 @@ serialplab/
 │   ├── timings.csv          ← Registro de tiempos por subtarea (generado)
 │   ├── prompt.md.template   ← Template del prompt
 │   └── prd.json.template    ← Template del prd.json
-├── schemas/                 ← (futuro) .proto, .avsc, .thrift, .fbs, .schema.json
-├── asyncapi/                ← (futuro) contratos AsyncAPI yaml
-├── service-springboot/      ← (futuro) Java 21 + Spring Boot 3, puerto 11001
-├── service-quarkus/         ← (futuro) Java 21 + Quarkus, puerto 11002
-├── service-go/              ← (futuro) Go 1.22+, puerto 11003
-├── service-node/            ← (futuro) Node.js 22 + TS, puerto 11004
-├── frontend-angular/        ← (futuro) Angular 19, puerto 11000
-└── docker-compose.yml       ← (futuro) perfiles: infra, app
+├── scripts/test/            ← Tests E2E y matriz de resultados
+│   ├── e2e-matrix.sh        ← Script de test E2E (84 combinaciones)
+│   └── results-template.md  ← Template de resultados
+├── scripts/codegen/         ← Generación de código desde schemas
+│   └── generate-all.sh      ← Genera código para todos los protocolos
+├── scripts/apicurio/        ← Gestión del registro de schemas
+│   ├── register-schemas.sh  ← Registra schemas en Apicurio
+│   └── wait-for-registry.sh ← Espera a que el registry esté listo
+├── apicurio/                ← Inicialización de Apicurio Registry
+│   └── init-registry-db.sql ← Script SQL de inicialización
+├── schemas/                 ← .proto, .avsc, .thrift, .fbs, .schema.json
+├── asyncapi/                ← Contratos AsyncAPI yaml
+├── service-springboot/      ← Java 21 + Spring Boot 3, puerto 11001
+├── service-quarkus/         ← Java 21 + Quarkus, puerto 11002
+├── service-go/              ← Go 1.22+, puerto 11003
+├── service-node/            ← Node.js 22 + TS, puerto 11004
+├── frontend-angular/        ← Angular 19, puerto 11000
+└── docker-compose.yml       ← Perfiles: infra, app
 ```
 
 ## Convenciones

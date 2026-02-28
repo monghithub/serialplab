@@ -155,7 +155,7 @@ Cada archivo define:
 
 ## 7. Matriz de compatibilidad
 
-Todas las combinaciones servicio × protocolo × broker están soportadas. La siguiente matriz resume el estado objetivo:
+Todas las combinaciones servicio × protocolo × broker están soportadas. La siguiente matriz resume el estado actual:
 
 ### Servicio × Protocolo
 
