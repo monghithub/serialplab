@@ -1,3 +1,15 @@
-FROM python:3-alpine
+FROM node:22-alpine AS build
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm install
+COPY tsconfig.json ./
+COPY src ./src
+RUN npm run build
+
+FROM node:22-alpine
+WORKDIR /app
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/package.json ./
 EXPOSE 11004
-CMD ["python", "-c", "from http.server import HTTPServer, BaseHTTPRequestHandler; import json\nclass H(BaseHTTPRequestHandler):\n def do_GET(self):\n  self.send_response(200)\n  self.send_header('Content-Type','application/json')\n  self.end_headers()\n  self.wfile.write(json.dumps({'status':'ok'}).encode())\nHTTPServer(('',11004),H).serve_forever()"]
+CMD ["node", "dist/index.js"]
