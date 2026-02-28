@@ -13,7 +13,7 @@
       "id": 2,
       "title": "Services, Dashboard y CRUD components",
       "promptFile": "prompt-2.md",
-      "passes": false
+      "passes": true
     },
     {
       "id": 3,
