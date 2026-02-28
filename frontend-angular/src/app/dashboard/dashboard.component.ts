@@ -10,11 +10,10 @@ import { ApiService } from '../services/api.service';
   template: `
     <h2>Dashboard</h2>
     <table>
-      <thead><tr><th>Service</th><th>Port</th><th>Status</th></tr></thead>
+      <thead><tr><th>Service</th><th>Status</th></tr></thead>
       <tbody>
         <tr *ngFor="let s of statuses">
           <td>{{ s.service.name }}</td>
-          <td>{{ s.service.port }}</td>
           <td [class]="s.ok ? 'status-ok' : 'status-down'">{{ s.ok ? 'OK' : 'DOWN' }}</td>
         </tr>
       </tbody>
