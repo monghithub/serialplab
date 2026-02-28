@@ -1,24 +1,3 @@
-# Tarea: Script de test E2E y matriz de resultados
-
-## Issue: #24
-## Subtarea: 1 de 1
-
-## Objetivo
-
-Crear un script bash de tests E2E que recorra las 84 combinaciones (4 servicios × 7 protocolos × 3 brokers), publique un mensaje y genere una matriz de resultados.
-
-## Ficheros a crear
-
-- `scripts/test/e2e-matrix.sh`
-- `scripts/test/results-template.md`
-
-## Contexto
-
-Cada servicio expone un endpoint `POST /publish` que acepta `{ "broker": "kafka", "protocol": "protobuf", "target": "service-go", "user": { "id": "...", "name": "...", "email": "...", "timestamp": 123 } }`.
-
-### scripts/test/e2e-matrix.sh
-
-```bash
 #!/usr/bin/env bash
 # Test E2E: 84 combinaciones (4 servicios × 7 protocolos × 3 brokers)
 set -euo pipefail
@@ -109,42 +88,3 @@ See CSV: \`$(basename "$RESULTS_FILE")\`
 MDEOF
 
 echo "Summary: ${SUMMARY_FILE}"
-```
-
-### scripts/test/results-template.md
-
-```markdown
-# E2E Test Results Template
-
-## Protocol × Broker Matrix
-
-| Protocol \ Broker | Kafka | RabbitMQ | NATS |
-|-------------------|-------|----------|------|
-| Protobuf          |       |          |      |
-| Avro              |       |          |      |
-| Thrift            |       |          |      |
-| MessagePack       |       |          |      |
-| FlatBuffers       |       |          |      |
-| CBOR              |       |          |      |
-| JSON Schema       |       |          |      |
-
-## Service × Broker Matrix
-
-| Service \ Broker | Kafka | RabbitMQ | NATS |
-|------------------|-------|----------|------|
-| springboot       |       |          |      |
-| quarkus          |       |          |      |
-| go               |       |          |      |
-| node             |       |          |      |
-```
-
-## Validación
-
-```bash
-test -f scripts/test/e2e-matrix.sh && test -f scripts/test/results-template.md && echo "OK"
-```
-
-## Reglas obligatorias
-
-- **Sin sudo:** NO ejecutes comandos con `sudo`.
-- **Commit siempre:** Al terminar, haz `git add` + `git commit` + `git push`.
