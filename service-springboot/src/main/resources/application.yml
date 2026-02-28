@@ -14,6 +14,8 @@ spring:
     properties:
       hibernate:
         default_schema: springboot
+        hbm2ddl:
+          create_namespaces: true
     open-in-view: false
   kafka:
     bootstrap-servers: localhost:11021

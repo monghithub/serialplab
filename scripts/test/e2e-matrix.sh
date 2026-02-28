@@ -36,13 +36,12 @@ for SOURCE in "${SERVICES[@]}"; do
     for BROKER in "${BROKERS[@]}"; do
       for PROTOCOL in "${PROTOCOLS[@]}"; do
         TOTAL=$((TOTAL + 1))
-        PAYLOAD="{\"broker\":\"${BROKER}\",\"protocol\":\"${PROTOCOL}\",\"target\":\"${TGT_NAME}\",\"user\":${USER_JSON}}"
 
         START_MS=$(date +%s%N | cut -b1-13)
         HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-          -X POST "http://localhost:${SRC_PORT}/publish" \
+          -X POST "http://localhost:${SRC_PORT}/publish/${TGT_NAME}/${PROTOCOL}/${BROKER}" \
           -H "Content-Type: application/json" \
-          -d "$PAYLOAD" \
+          -d "$USER_JSON" \
           --connect-timeout 5 --max-time 10 2>/dev/null || echo "000")
         END_MS=$(date +%s%N | cut -b1-13)
         DURATION=$((END_MS - START_MS))

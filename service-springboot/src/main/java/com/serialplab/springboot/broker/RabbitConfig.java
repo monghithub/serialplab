@@ -19,26 +19,16 @@ public class RabbitConfig {
     };
 
     @Bean
-    public TopicExchange topicExchange() {
-        return new TopicExchange(EXCHANGE, true, false);
-    }
-
-    @Bean
-    public List<Queue> protocolQueues() {
-        List<Queue> queues = new ArrayList<>();
+    public Declarables rabbitDeclarables() {
+        List<Declarable> declarables = new ArrayList<>();
+        TopicExchange exchange = new TopicExchange(EXCHANGE, true, false);
         for (String protocol : PROTOCOLS) {
-            queues.add(new Queue("serialplab." + SERVICE_NAME + "." + protocol, true));
+            String queueName = "serialplab." + SERVICE_NAME + "." + protocol;
+            Queue queue = new Queue(queueName, true);
+            declarables.add(queue);
+            declarables.add(BindingBuilder.bind(queue).to(exchange).with(queueName));
         }
-        return queues;
-    }
-
-    @Bean
-    public List<Binding> protocolBindings(TopicExchange topicExchange, List<Queue> protocolQueues) {
-        List<Binding> bindings = new ArrayList<>();
-        for (Queue queue : protocolQueues) {
-            bindings.add(BindingBuilder.bind(queue).to(topicExchange).with(queue.getName()));
-        }
-        return bindings;
+        return new Declarables(declarables);
     }
 
     @Bean("rabbitQueues")
