@@ -8,7 +8,8 @@ import { RouterOutlet, RouterLink } from '@angular/router';
   template: `
     <nav>
       <a routerLink="/">Dashboard</a> |
-      <a routerLink="/crud">CRUD</a>
+      <a routerLink="/crud">CRUD</a> |
+      <a routerLink="/database">Database</a>
     </nav>
     <router-outlet></router-outlet>
   `
