@@ -14,9 +14,13 @@ export async function initDb(): Promise<void> {
     await pool.query(`CREATE TABLE IF NOT EXISTS node.message_log (
       id SERIAL PRIMARY KEY,
       direction TEXT, protocol TEXT, broker TEXT, target_service TEXT,
+      origin_service TEXT, raw_payload BYTEA,
       user_id TEXT, user_name TEXT, user_email TEXT, user_timestamp BIGINT,
       created_at TIMESTAMP DEFAULT NOW()
     )`);
+    // Add columns if table already exists
+    await pool.query(`ALTER TABLE node.message_log ADD COLUMN IF NOT EXISTS origin_service TEXT`).catch(() => {});
+    await pool.query(`ALTER TABLE node.message_log ADD COLUMN IF NOT EXISTS raw_payload BYTEA`).catch(() => {});
   } catch (err) {
     console.warn('DB init warning:', err);
   }
@@ -24,11 +28,12 @@ export async function initDb(): Promise<void> {
 
 export async function saveMessage(msg: {
   direction: string; protocol: string; broker: string; targetService: string;
+  originService?: string; rawPayload?: Buffer;
   userId: string; userName: string; userEmail: string; userTimestamp: number;
 }): Promise<void> {
   await pool.query(
-    'INSERT INTO node.message_log (direction, protocol, broker, target_service, user_id, user_name, user_email, user_timestamp) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
-    [msg.direction, msg.protocol, msg.broker, msg.targetService, msg.userId, msg.userName, msg.userEmail, msg.userTimestamp]
+    'INSERT INTO node.message_log (direction, protocol, broker, target_service, origin_service, raw_payload, user_id, user_name, user_email, user_timestamp) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)',
+    [msg.direction, msg.protocol, msg.broker, msg.targetService, msg.originService || null, msg.rawPayload || null, msg.userId, msg.userName, msg.userEmail, msg.userTimestamp]
   );
 }
 

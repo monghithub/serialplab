@@ -13,6 +13,8 @@ type MessageLog struct {
 	Protocol      string `json:"protocol"`
 	Broker        string `json:"broker"`
 	TargetService string `json:"target_service"`
+	OriginService string `json:"origin_service"`
+	RawPayload    []byte `json:"raw_payload"`
 	UserID        string `json:"user_id"`
 	UserName      string `json:"user_name"`
 	UserEmail     string `json:"user_email"`

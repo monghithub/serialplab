@@ -14,6 +14,11 @@ public class MessageLog extends PanacheEntity {
     public String protocol;
     public String broker;
     public String targetService;
+    public String originService;
+
+    @Column(name = "rawpayload")
+    public byte[] rawPayload;
+
     public String userId;
     public String userName;
     public String userEmail;
@@ -25,12 +30,15 @@ public class MessageLog extends PanacheEntity {
     public MessageLog() {}
 
     public MessageLog(String direction, String protocol, String broker,
-                      String targetService, String userId, String userName,
+                      String targetService, String originService, byte[] rawPayload,
+                      String userId, String userName,
                       String userEmail, long userTimestamp) {
         this.direction = direction;
         this.protocol = protocol;
         this.broker = broker;
         this.targetService = targetService;
+        this.originService = originService;
+        this.rawPayload = rawPayload;
         this.userId = userId;
         this.userName = userName;
         this.userEmail = userEmail;

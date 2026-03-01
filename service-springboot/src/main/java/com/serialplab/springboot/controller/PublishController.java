@@ -33,10 +33,10 @@ public class PublishController {
             @RequestBody Map<String, Object> user) {
         try {
             byte[] data = serializationService.serialize(protocol, user);
-            brokerService.publish(broker, target, protocol, data);
+            brokerService.publish(broker, target, protocol, data, "service-springboot");
 
             messageLogRepository.save(new MessageLog(
-                "sent", protocol, broker, target,
+                "sent", protocol, broker, target, "service-springboot", data,
                 (String) user.get("id"),
                 (String) user.get("name"),
                 (String) user.get("email"),

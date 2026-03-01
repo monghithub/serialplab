@@ -3,6 +3,7 @@ import { serialize } from './serialization';
 import { publish } from './broker';
 import { saveMessage, getMessages } from './db';
 
+const SERVICE_NAME = 'service-node';
 const router = Router();
 
 router.post('/publish/:target/:protocol/:broker', async (req: Request, res: Response) => {
@@ -12,10 +13,11 @@ router.post('/publish/:target/:protocol/:broker', async (req: Request, res: Resp
     const broker = req.params.broker as string;
     const user = req.body;
     const data = serialize(protocol, user);
-    await publish(broker, target, protocol, data);
+    await publish(broker, target, protocol, data, SERVICE_NAME);
 
     await saveMessage({
       direction: 'sent', protocol, broker, targetService: target,
+      originService: SERVICE_NAME, rawPayload: data,
       userId: user.id, userName: user.name, userEmail: user.email, userTimestamp: user.timestamp,
     });
 

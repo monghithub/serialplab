@@ -11,7 +11,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-type MessageHandler func(broker, protocol string, data []byte)
+type MessageHandler func(broker, protocol string, data []byte, origin string)
 
 func StartConsumers(serviceName string, handler MessageHandler) {
 	go consumeKafka(serviceName, handler)
@@ -40,7 +40,14 @@ func consumeKafka(serviceName string, handler MessageHandler) {
 					log.Printf("[Kafka] Read error on %s: %v", topic, err)
 					return
 				}
-				handler("kafka", proto, msg.Value)
+				origin := "unknown"
+				for _, h := range msg.Headers {
+					if h.Key == "X-Origin" {
+						origin = string(h.Value)
+						break
+					}
+				}
+				handler("kafka", proto, msg.Value, origin)
 			}
 		}()
 	}
@@ -65,7 +72,6 @@ func consumeRabbit(serviceName string, handler MessageHandler) {
 		log.Printf("[RabbitMQ] Queue declare failed: %v", err)
 		return
 	}
-	// Bind to all routing keys matching the service
 	bindKey := fmt.Sprintf("serialplab.%s.*", serviceName)
 	ch.QueueBind(q.Name, bindKey, "amq.topic", false, nil)
 	msgs, err := ch.Consume(q.Name, "", true, false, false, false, nil)
@@ -76,7 +82,15 @@ func consumeRabbit(serviceName string, handler MessageHandler) {
 	log.Printf("[RabbitMQ] Consuming queue: %s", queueName)
 	for msg := range msgs {
 		protocol := extractProtocol(msg.RoutingKey)
-		handler("rabbitmq", protocol, msg.Body)
+		origin := "unknown"
+		if v, ok := msg.Headers["X-Origin"]; ok {
+			if s, ok := v.(string); ok {
+				origin = s
+			} else if b, ok := v.([]byte); ok {
+				origin = string(b)
+			}
+		}
+		handler("rabbitmq", protocol, msg.Body, origin)
 	}
 }
 
@@ -90,9 +104,14 @@ func consumeNats(serviceName string, handler MessageHandler) {
 	log.Printf("[NATS] Subscribing to: %s", subject)
 	nc.Subscribe(subject, func(msg *nats.Msg) {
 		protocol := extractProtocol(msg.Subject)
-		handler("nats", protocol, msg.Data)
+		origin := "unknown"
+		if msg.Header != nil {
+			if v := msg.Header.Get("X-Origin"); v != "" {
+				origin = v
+			}
+		}
+		handler("nats", protocol, msg.Data, origin)
 	})
-	// Block forever
 	select {}
 }
 

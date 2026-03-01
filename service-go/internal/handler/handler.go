@@ -28,14 +28,15 @@ func PublishHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := broker.Publish(brokerName, target, protocol, data); err != nil {
+	if err := broker.Publish(brokerName, target, protocol, data, "service-go"); err != nil {
 		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
 		return
 	}
 
 	_ = db.SaveMessage(model.MessageLog{
 		Direction: "sent", Protocol: protocol, Broker: brokerName,
-		TargetService: target, UserID: user.ID, UserName: user.Name,
+		TargetService: target, OriginService: "service-go", RawPayload: data,
+		UserID: user.ID, UserName: user.Name,
 		UserEmail: user.Email, UserTimestamp: user.Timestamp,
 	})
 

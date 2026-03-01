@@ -15,6 +15,11 @@ public class MessageLog {
     private String protocol;
     private String broker;
     private String targetService;
+    private String originService;
+
+    @Column(name = "raw_payload")
+    private byte[] rawPayload;
+
     private String userId;
     private String userName;
     private String userEmail;
@@ -26,12 +31,15 @@ public class MessageLog {
     public MessageLog() {}
 
     public MessageLog(String direction, String protocol, String broker,
-                      String targetService, String userId, String userName,
+                      String targetService, String originService, byte[] rawPayload,
+                      String userId, String userName,
                       String userEmail, long userTimestamp) {
         this.direction = direction;
         this.protocol = protocol;
         this.broker = broker;
         this.targetService = targetService;
+        this.originService = originService;
+        this.rawPayload = rawPayload;
         this.userId = userId;
         this.userName = userName;
         this.userEmail = userEmail;
@@ -44,6 +52,8 @@ public class MessageLog {
     public String getProtocol() { return protocol; }
     public String getBroker() { return broker; }
     public String getTargetService() { return targetService; }
+    public String getOriginService() { return originService; }
+    public byte[] getRawPayload() { return rawPayload; }
     public String getUserId() { return userId; }
     public String getUserName() { return userName; }
     public String getUserEmail() { return userEmail; }

@@ -2,7 +2,7 @@ import { Kafka } from 'kafkajs';
 import amqplib from 'amqplib';
 import { connect as natsConnect } from 'nats';
 
-export type MessageHandler = (broker: string, protocol: string, data: Buffer) => void;
+export type MessageHandler = (broker: string, protocol: string, data: Buffer, origin: string) => void;
 
 export async function startConsumers(serviceName: string, handler: MessageHandler): Promise<void> {
   consumeKafka(serviceName, handler).catch(err =>
@@ -26,7 +26,8 @@ async function consumeKafka(serviceName: string, handler: MessageHandler): Promi
     eachMessage: async ({ topic, message }) => {
       if (message.value) {
         const protocol = extractProtocol(topic);
-        handler('kafka', protocol, message.value as Buffer);
+        const origin = message.headers?.['X-Origin']?.toString() || 'unknown';
+        handler('kafka', protocol, message.value as Buffer, origin);
       }
     },
   });
@@ -43,7 +44,8 @@ async function consumeRabbit(serviceName: string, handler: MessageHandler): Prom
   ch.consume(queueName, (msg) => {
     if (msg) {
       const protocol = extractProtocol(msg.fields.routingKey);
-      handler('rabbitmq', protocol, msg.content);
+      const origin = (msg.properties.headers?.['X-Origin'] || 'unknown').toString();
+      handler('rabbitmq', protocol, msg.content, origin);
       ch.ack(msg);
     }
   });
@@ -56,7 +58,8 @@ async function consumeNats(serviceName: string, handler: MessageHandler): Promis
   const sub = nc.subscribe(subject);
   for await (const msg of sub) {
     const protocol = extractProtocol(msg.subject);
-    handler('nats', protocol, Buffer.from(msg.data));
+    const origin = msg.headers?.get('X-Origin') || 'unknown';
+    handler('nats', protocol, Buffer.from(msg.data), origin);
   }
 }
 

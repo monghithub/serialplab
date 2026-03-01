@@ -31,10 +31,10 @@ public class PublishResource {
                             Map<String, Object> user) {
         try {
             byte[] data = serializationService.serialize(protocol, user);
-            brokerService.publish(broker, target, protocol, data);
+            brokerService.publish(broker, target, protocol, data, "service-quarkus");
 
             var log = new MessageLog(
-                "sent", protocol, broker, target,
+                "sent", protocol, broker, target, "service-quarkus", data,
                 (String) user.get("id"),
                 (String) user.get("name"),
                 (String) user.get("email"),

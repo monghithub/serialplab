@@ -15,15 +15,17 @@ app.use(routes);
 
 const PORT = 11004;
 initDb().then(() => {
-  startConsumers('service-node', (broker, protocol, data) => {
+  startConsumers('service-node', (broker, protocol, data, origin) => {
     try {
       const user = deserialize(protocol, data);
-      console.log(`[${broker}/${protocol}] Received user: ${user.id}`);
+      console.log(`[${broker}/${protocol}] Received user: ${user.id} from ${origin}`);
       saveMessage({
-        direction: 'in',
+        direction: 'received',
         protocol,
         broker,
         targetService: 'service-node',
+        originService: origin,
+        rawPayload: data,
         userId: user.id,
         userName: user.name,
         userEmail: user.email,
