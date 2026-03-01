@@ -79,6 +79,18 @@ services:
     healthcheck:
       test: ["NONE"]
 
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    profiles: ["infra"]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_CLUSTERS_0_NAME: serialplab
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    ports:
+      - "11026:8080"
+
   apicurio-registry:
     image: apicurio/apicurio-registry:3.1.7
     profiles: ["infra"]
